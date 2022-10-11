@@ -36,7 +36,6 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
 
     private var layerHandle: AGSCancelable?
 
-
     private var trackIdentityLayers = false
 
     private var trackViewpointChangedListenerEvent = false
@@ -784,13 +783,15 @@ extension ArcgisMapController: AGSGeoViewTouchDelegate {
     }
 
     private func sendOnMapTap(screenPoint: CGPoint) {
-        let json = mapView.screen(toLocation: screenPoint).toJSONFlutter()
-        channel.invokeMethod("map#onTap", arguments: ["screenPoint": screenPoint.toJSON(), "position": json])
+        if let json = mapView.screen(toLocation: screenPoint).toJSONFlutter() {
+            channel.invokeMethod("map#onTap", arguments: ["screenPoint": screenPoint.toJSON(), "position": json])
+        }
     }
 
     private func sendOnMapLongPress(screenPoint: CGPoint) {
-        let json = mapView.screen(toLocation: screenPoint).toJSONFlutter()
-        channel.invokeMethod("map#onLongPress", arguments: ["screenPoint": screenPoint.toJSON(), "position": json])
+        if let json = mapView.screen(toLocation: screenPoint).toJSONFlutter() {
+            channel.invokeMethod("map#onLongPress", arguments: ["screenPoint": screenPoint.toJSON(), "position": json])
+        }
     }
 
     private func sendUserLocationTap() {
