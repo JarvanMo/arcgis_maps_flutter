@@ -43,7 +43,6 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
     private RouteTaskController routeTaskController;
     private ArcgisNativeObjectsController nativeObjectsController;
     private ServiceTableController serviceTableController;
-    private OfflineMapTaskController offlineMapTaskController;
     private MethodChannel channel;
 
     @Nullable
@@ -71,8 +70,6 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
         routeTaskController = new RouteTaskController(binding.getApplicationContext(), binding.getBinaryMessenger());
 
-        offlineMapTaskController = new OfflineMapTaskController(binding.getBinaryMessenger());
-
         serviceTableController = new ServiceTableController(binding.getBinaryMessenger());
         nativeObjectsController = new ArcgisNativeObjectsController(binding.getBinaryMessenger(), new ArcgisNativeObjectFactoryImpl());
     }
@@ -94,9 +91,6 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
         routeTaskController.dispose();
         routeTaskController = null;
-
-        offlineMapTaskController.dispose();
-        offlineMapTaskController = null;
 
         serviceTableController.dispose();
         serviceTableController = null;
