@@ -31,6 +31,7 @@ import com.esri.arcgisruntime.mapping.view.BackgroundGrid;
 import com.esri.arcgisruntime.mapping.view.DrawStatusChangedEvent;
 import com.esri.arcgisruntime.mapping.view.DrawStatusChangedListener;
 import com.esri.arcgisruntime.mapping.view.GraphicsOverlay;
+import com.esri.arcgisruntime.mapping.view.LocationDisplay;
 import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.mapping.view.TimeExtentChangedEvent;
 import com.esri.arcgisruntime.mapping.view.TimeExtentChangedListener;
@@ -567,13 +568,6 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
                 invalidateMapHelper.invalidateMapIfNeeded();
                 final Map<?, ?> data = call.arguments();
                 measureController.onAreaMeasure((String) data.get("action"),result);
-                break;
-            }
-            case "map#invalidatePlatformView": {
-                Choreographer.getInstance().postFrameCallback(frameTimeNanos -> {
-                    mapContainer.invalidate();
-                    mapContainer.requestLayout();
-                });
                 break;
             }
             default:
