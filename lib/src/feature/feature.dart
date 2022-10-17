@@ -84,9 +84,7 @@ class FeatureTable {
             featureTypes: ((){
               List<FeatureType> result = [];
               (json["featureTypes"] as List<Object?>?)?.forEach((e) {
-                if(e is Map<String,Object?>){
-                  result.add(FeatureType.fromJson(e)) ;
-                }
+                  result.add(FeatureType.fromJson(e as Map<String,Object?>)) ;
               });
               return result;
             }).call());
