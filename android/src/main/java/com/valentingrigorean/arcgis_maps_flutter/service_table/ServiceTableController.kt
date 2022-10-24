@@ -23,6 +23,9 @@ class ServiceTableController(messenger: BinaryMessenger) :
             "queryFeatures" -> {
                 queryFeatures(call, result)
             }
+            "queryStatisticsAsync" -> {
+                queryStatisticsAsync(call, result)
+            }
             else -> {}
         }
     }
@@ -37,21 +40,8 @@ class ServiceTableController(messenger: BinaryMessenger) :
             call.argument<Map<Any, Any>?>("queryParameters").orEmpty()
         val whereClauseParam: String? = queryParametersMap["whereClause"] as String?
         val spatialRelationshipParam: QueryParameters.SpatialRelationship? =
-            when (queryParametersMap["spatialRelationship"] as String?) {
-                "UNKNOWN" -> QueryParameters.SpatialRelationship.UNKNOWN
-                "RELATE" -> QueryParameters.SpatialRelationship.RELATE
-                "EQUALS" -> QueryParameters.SpatialRelationship.EQUALS
-                "DISJOINT" -> QueryParameters.SpatialRelationship.DISJOINT
-                "INTERSECTS" -> QueryParameters.SpatialRelationship.INTERSECTS
-                "TOUCHES" -> QueryParameters.SpatialRelationship.TOUCHES
-                "CROSSES" -> QueryParameters.SpatialRelationship.CROSSES
-                "WITHIN" -> QueryParameters.SpatialRelationship.WITHIN
-                "CONTAINS" -> QueryParameters.SpatialRelationship.CONTAINS
-                "OVERLAPS" -> QueryParameters.SpatialRelationship.OVERLAPS
-                "ENVELOPE_INTERSECTS" -> QueryParameters.SpatialRelationship.ENVELOPE_INTERSECTS
-                "INDEX_INTERSECTS" -> QueryParameters.SpatialRelationship.INDEX_INTERSECTS
-                else -> null
-            }
+            (queryParametersMap["spatialRelationship"] as String?).toSpatialRelationship()
+
 
         val geometryParamJson = queryParametersMap["geometry"]
 
@@ -97,6 +87,86 @@ class ServiceTableController(messenger: BinaryMessenger) :
         }
 
     }
+
+    private fun queryStatisticsAsync(call: MethodCall, result: MethodChannel.Result) {
+        val serviceFeatureTable = ServiceFeatureTable(call.argument<String?>("url"))
+        val queryParametersMap: Map<Any, Any> =
+            call.argument<Map<Any, Any>?>("statisticsQueryParameters").orEmpty()
+
+        val whereClauseParam: String? = queryParametersMap["whereClause"] as String?
+
+        val spatialRelationshipParam: QueryParameters.SpatialRelationship? =
+            (queryParametersMap["spatialRelationship"] as String?).toSpatialRelationship()
+
+        val geometryParamJson = queryParametersMap["geometry"]
+
+        var geometryParam: Geometry? = null
+        if (geometryParamJson != null) {
+            geometryParam = Convert.toGeometry(geometryParamJson)
+        }
+
+        val groupByFieldNamesParam =
+            (queryParametersMap["groupByFieldNames"] as? List<String>).orEmpty()
+
+        val statisticDefinitionsParam =
+            (queryParametersMap["statisticDefinitions"] as List<Map<String, String>>).orEmpty()
+                .map {
+                    StatisticDefinition(
+                        it["fieldName"],
+                        it["statisticType"].toStatisticType(),
+                        it["outputAlias"],
+                    )
+                }.toList()
+
+        val statisticsQueryParameters = StatisticsQueryParameters(statisticDefinitionsParam).apply {
+            whereClauseParam?.let {
+                whereClause = it
+            }
+            geometryParam?.let {
+                geometry = it
+            }
+            spatialRelationshipParam?.let {
+                spatialRelationship = it
+            }
+            groupByFieldNames.addAll(groupByFieldNamesParam)
+        }
+
+        val statisticsResult = serviceFeatureTable.queryStatisticsAsync(statisticsQueryParameters)
+        statisticsResult.addDoneListener {
+            val realResult = statisticsResult.get()
+
+            val resultRecords: MutableList<Map<String, Any>> = mutableListOf()
+
+            realResult.iterator().forEach {
+                val group: MutableMap<String, Any> = mutableMapOf()
+                val statistics: MutableMap<String, Any> = mutableMapOf()
+                it.group.forEach { (key, value) ->
+                    if (value is String || value is Int || value is Short || value is Double || value is Float) {
+                        group[key] = value
+                    }
+                }
+
+                it.statistics.forEach { (key, value) ->
+                    if (value is String || value is Int || value is Short || value is Double || value is Float) {
+                        statistics[key] = value
+                    }
+                }
+
+                resultRecords.add(
+                    mapOf(
+                        "group" to group,
+                        "statistics" to statistics
+                    )
+                )
+            }
+            result.success(
+                mapOf<String,Any>(
+                    "results" to resultRecords
+                )
+            )
+        }
+    }
+
 
     private fun Feature.toMap(): Map<String, Any> {
         val resultMap: MutableMap<String, Any> = mutableMapOf()
@@ -195,5 +265,34 @@ class ServiceTableController(messenger: BinaryMessenger) :
             Field.Type.GLOBALID -> "globalid"
             Field.Type.BLOB, Field.Type.GEOMETRY, Field.Type.RASTER, Field.Type.XML -> "ignore"
         }
+    }
+
+
+    private fun String?.toSpatialRelationship(): QueryParameters.SpatialRelationship? =
+        when (this) {
+            "UNKNOWN" -> QueryParameters.SpatialRelationship.UNKNOWN
+            "RELATE" -> QueryParameters.SpatialRelationship.RELATE
+            "EQUALS" -> QueryParameters.SpatialRelationship.EQUALS
+            "DISJOINT" -> QueryParameters.SpatialRelationship.DISJOINT
+            "INTERSECTS" -> QueryParameters.SpatialRelationship.INTERSECTS
+            "TOUCHES" -> QueryParameters.SpatialRelationship.TOUCHES
+            "CROSSES" -> QueryParameters.SpatialRelationship.CROSSES
+            "WITHIN" -> QueryParameters.SpatialRelationship.WITHIN
+            "CONTAINS" -> QueryParameters.SpatialRelationship.CONTAINS
+            "OVERLAPS" -> QueryParameters.SpatialRelationship.OVERLAPS
+            "ENVELOPE_INTERSECTS" -> QueryParameters.SpatialRelationship.ENVELOPE_INTERSECTS
+            "INDEX_INTERSECTS" -> QueryParameters.SpatialRelationship.INDEX_INTERSECTS
+            else -> null
+        }
+
+    private fun String?.toStatisticType(): StatisticType = when (this) {
+        "AVERAGE" -> StatisticType.AVERAGE
+        "COUNT" -> StatisticType.COUNT
+        "MAXIMUM" -> StatisticType.MAXIMUM
+        "MINIMUM" -> StatisticType.MINIMUM
+        "STANDARD_DEVIATION" -> StatisticType.STANDARD_DEVIATION
+        "SUM" -> StatisticType.SUM
+        "VARIANCE" -> StatisticType.VARIANCE
+        else -> StatisticType.SUM
     }
 }

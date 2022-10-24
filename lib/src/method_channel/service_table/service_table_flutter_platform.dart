@@ -26,4 +26,9 @@ abstract class ServiceTableFlutterPlatform extends PlatformInterface {
           FeatureTableQueryFeatureFields.loadAll}) {
     throw UnimplementedError('queryFeatures() has not been implemented.');
   }
+
+  Future<StatisticResult> queryStatisticsAsync(
+      String url, StatisticsQueryParameters statisticsQueryParameters) {
+    throw UnimplementedError('queryStatisticsAsync() has not been implemented.');
+  }
 }

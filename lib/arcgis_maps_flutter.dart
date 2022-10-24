@@ -192,6 +192,8 @@ part 'src/toolkit/time_slider/time_slider_data_provider.dart';
 
 part 'src/data/query/query_parmeters.dart';
 part 'src/data/layer/layer_content.dart';
+part 'src/data/statistic/statistic.dart';
+part 'src/data/statistic/statistic_result.dart';
 part 'src/data/measure/measure_actions.dart';
 part 'src/feature/feature.dart';
 part 'src/service_table/service_table.dart';
