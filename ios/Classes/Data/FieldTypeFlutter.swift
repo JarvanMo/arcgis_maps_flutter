@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import ArcGIS
 
 enum FieldTypeFlutter: Int, Codable {
     case unknown = 0
@@ -11,15 +12,15 @@ enum FieldTypeFlutter: Int, Codable {
     case date = 3
     case text = 4
     case nullable = 5
+    case blob = 6
+    case geometry = 7
 }
 
 func getFieldType(value: Any?) -> FieldTypeFlutter {
-    guard  let value = value else {
+    guard let _ = value else {
         return .nullable
     }
-    if let _ = value as? NSNull {
-        return .nullable
-    } else if let _ = value as? String {
+    if let _ = value as? String {
         return .text
     } else if let _ = value as? Int {
         return .integer
@@ -40,6 +41,14 @@ func getFieldType(value: Any?) -> FieldTypeFlutter {
         return .date
     } else if let _ = value as? NSData {
         return .date
+    } else if let _ = value as? UUID {
+        return .text
+    } else if let _ = value as? Data {
+        return .blob
+    } else if let _ = value as? AGSGeometry {
+        return .geometry
+    } else if let _ = value as? NSNull {
+        return .nullable
     }
     return .unknown
 }
@@ -58,8 +67,29 @@ func toFlutterFieldType(obj: Any?) -> Any {
             value = nil
         }
         break
+    case .geometry:
+        if let geometry = obj as? AGSGeometry {
+            value = geometry.toJSONFlutter()
+        } else {
+            value = nil
+        }
+        break
+    case .blob:
+        if let bytes = obj as? Data {
+            value = FlutterStandardTypedData(bytes: bytes)
+        } else {
+            value = nil
+        }
+        break
+    case .unknown:
+        value = nil
+        break
     default:
-        value = obj
+        if let obj = obj as? UUID {
+            value = obj.uuidString
+        } else {
+            value = obj
+        }
         break
     }
     return [
@@ -75,6 +105,16 @@ func fromFlutterField(data: Dictionary<String, Any>) -> Any? {
     case .date:
         if let date = value as? String {
             value = date.toDateFromIso8601()
+        }
+        break
+    case .geometry:
+        if let geometry = value as? Dictionary<String, Any> {
+            value = AGSGeometry.fromFlutter(data: geometry)
+        }
+        break
+    case .blob:
+        if let bytes = value as? FlutterStandardTypedData {
+            value = bytes.data
         }
         break
     default:

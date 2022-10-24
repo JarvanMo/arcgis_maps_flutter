@@ -81,7 +81,14 @@ class FeatureTable {
             fields: [],
             tableName: json["tableName"] as String?,
             displayName: json["displayName"] as String?,
-            featureTypes: []);
+            featureTypes: ((){
+              List<FeatureType> result = [];
+              (json["featureTypes"] as List<Object?>?)?.forEach((e) {
+                  result.add(FeatureType.fromJson(e as Map<Object?, Object?>)) ;
+              });
+              return result;
+            }).call());
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -99,8 +106,8 @@ class FeatureType {
 
   FeatureType.named({this.id, this.name});
 
-  FeatureType.fromJson(Map<String, dynamic> json)
-      : this.named(name: json["name"], id: json["id"]);
+  FeatureType.fromJson(Map<Object?, Object?> json)
+      : this.named(name: json["name"] as String?, id: json["id"]);
 
   Map<String, dynamic> toJson() {
     return {"name": name, "id": id};
