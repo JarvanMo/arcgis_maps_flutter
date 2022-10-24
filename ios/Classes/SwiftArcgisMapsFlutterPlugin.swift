@@ -20,7 +20,6 @@ public class SwiftArcgisMapsFlutterPlugin: NSObject, FlutterPlugin {
         locatorTaskController = LocatorTaskController(messenger: registrar.messenger())
         coordinateFormatterController = CoordinateFormatterController(messenger: registrar.messenger())
         routeTaskController = RouteTaskController(messenger: registrar.messenger())
-        offlineMapTaskController = OfflineMapTaskController(messenger: registrar.messenger())
         serviceTableController = ArcGisServiceTableController(messenger: registrar.messenger())
         authenticationManager = ArcGisAuthenticationManager(messenger: registrar.messenger())
         arcgisNativeObjectsController = ArcgisNativeObjectsController(messenger: registrar.messenger(), factory: ArcgisNativeObjectFactoryImpl())
