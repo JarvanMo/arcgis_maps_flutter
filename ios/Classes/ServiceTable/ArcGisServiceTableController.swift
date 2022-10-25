@@ -23,12 +23,14 @@ class ArcGisServiceTableController {
         methodChannel.setMethodCallHandler(nil)
     }
 
-
     private func handle(_ call: FlutterMethodCall,
                         result: @escaping FlutterResult) -> Void {
         switch call.method {
         case "queryFeatures":
             queryFeatures(call, result: result)
+            break
+        case "queryStatisticsAsync":
+            queryStatisticsAsync(call, result: result)
             break
         default:
             result(FlutterMethodNotImplemented)
@@ -97,7 +99,7 @@ class ArcGisServiceTableController {
         }
 
 //        [weak self]
-        let serviceTable : AGSServiceFeatureTable = AGSServiceFeatureTable(url: url)
+        let serviceTable: AGSServiceFeatureTable = AGSServiceFeatureTable(url: url)
         serviceTables.append(serviceTable)
         serviceTable.queryFeatures(with: query, queryFeatureFields: queryFeatureFields) { [weak self](queryResult, error) in
             if let index = self?.serviceTables.firstIndex(of: serviceTable) {
@@ -115,6 +117,136 @@ class ArcGisServiceTableController {
                 }
                 result(["features": featuresJson])
             }
+        }
+    }
+
+    private func queryStatisticsAsync(_ call: FlutterMethodCall,
+                                      result: @escaping FlutterResult) {
+
+        let emptyResult: Dictionary<String, [Dictionary<String, Any>]> = ["results": [Dictionary<String, Any>]()]
+        guard let data = call.arguments as? Dictionary<String, Any> else {
+            result(emptyResult)
+            return
+        }
+
+        guard let url = URL(string: data["url"] as! String) else {
+            result(emptyResult)
+            return
+        }
+
+
+        guard let queryParametersMap = data["statisticsQueryParameters"] as? Dictionary<String, Any> else {
+            result(emptyResult)
+            return
+        }
+
+        let whereClause: String? = queryParametersMap["whereClause"] as? String
+
+        let geometryParam: Dictionary<String, Any>? = queryParametersMap["geometry"] as? Dictionary<String, Any>
+        let spatialRelationShipParam: AGSSpatialRelationship? = strToSpatialRelationShip(string: queryParametersMap["spatialRelationship"] as? String)
+
+        let groupByFieldNamesParam: Array<String> = (queryParametersMap["groupByFieldNames"] as? Array<String> ?? [String]())
+
+
+        let statisticDefinitionsParam = (queryParametersMap["statisticDefinitions"] as? [Dictionary<String, String>] ?? [Dictionary<String, String>]()).map { dictionary -> AGSStatisticDefinition in
+            AGSStatisticDefinition(onFieldName: dictionary["fieldName"] ?? "", statisticType: strToStaticType(string: dictionary["statisticType"]), outputAlias: dictionary["outputAlias"])
+        }
+
+
+        let statisticsQueryParameters = AGSStatisticsQueryParameters(statisticDefinitions: statisticDefinitionsParam)
+
+        if let w = whereClause {
+            statisticsQueryParameters.whereClause = w
+        }
+
+        if let g = geometryParam {
+            statisticsQueryParameters.geometry = AGSGeometry.fromFlutter(data: g)
+        }
+
+
+        if let srsp = spatialRelationShipParam {
+            statisticsQueryParameters.spatialRelationship = srsp
+        }
+
+        statisticsQueryParameters.groupByFieldNames.append(contentsOf: groupByFieldNamesParam)
+
+        let serviceTable: AGSServiceFeatureTable = AGSServiceFeatureTable(url: url)
+        serviceTables.append(serviceTable)
+
+        serviceTable.queryStatistics(with: statisticsQueryParameters) { [weak self](queryResult, error) in
+            if let index = self?.serviceTables.firstIndex(of: serviceTable) {
+                self?.serviceTables.remove(at: index)
+            }
+            if error != nil {
+                result(emptyResult)
+            } else {
+                guard let statistics = queryResult?.statisticRecordEnumerator().allObjects else {
+                    result(emptyResult)
+                    return
+                }
+
+                var resultRecords:[[String:Any]] = [[String:Any]]();
+
+                statistics.forEach { record in
+                    var group: Dictionary<String, Any> = [String: Any]();
+                    record.group.forEach { key, value in
+                        if(value is String || value is NSNumber || value == nil){
+                            group[key] = value
+                        }
+                    }
+
+                    var stat: Dictionary<String, Any> = [String: Any]();
+                    record.statistics.forEach { key, value in
+                        if(value is String || value is NSNumber || value == nil){
+                            stat[key] = value
+                        }
+                    }
+                    resultRecords.append([
+                        "group":group,
+                        "statistics":stat
+                    ])
+                }
+
+                result(["results": resultRecords])
+
+            }
+        }
+
+    }
+
+    private func strToStaticType(string: String?) -> AGSStatisticType {
+        var staticType: AGSStatisticType = AGSStatisticType.sum
+
+        switch (string) {
+
+        case "AVERAGE":
+            staticType = AGSStatisticType.average
+            break
+
+        case "COUNT":
+            staticType = AGSStatisticType.count
+            break
+        case "MAXIMUM":
+            staticType = AGSStatisticType.maximum
+            break
+        case "MINIMUM":
+            staticType = AGSStatisticType.minimum
+            break
+        case "STANDARD_DEVIATION":
+            staticType = AGSStatisticType.standardDeviation
+            break
+        case "SUM":
+            staticType = AGSStatisticType.sum
+            break
+            break
+        case "VARIANCE":
+            staticType = AGSStatisticType.variance
+            break
+        default:
+            staticType = AGSStatisticType.sum
+            break
+
+            return staticType
         }
     }
 
