@@ -245,9 +245,10 @@ class ArcGisServiceTableController {
         default:
             staticType = AGSStatisticType.sum
             break
-
-            return staticType
         }
+
+        return staticType
+
     }
 
     private func strToSpatialRelationShip(string: String?) -> AGSSpatialRelationship? {
