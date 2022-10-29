@@ -1,6 +1,7 @@
 package com.valentingrigorean.arcgis_maps_flutter.service_table
 
 import com.esri.arcgisruntime.data.*
+import com.esri.arcgisruntime.data.QueryParameters.OrderBy
 import com.esri.arcgisruntime.geometry.Geometry
 import com.valentingrigorean.arcgis_maps_flutter.Convert
 import io.flutter.plugin.common.BinaryMessenger
@@ -118,6 +119,19 @@ class ServiceTableController(messenger: BinaryMessenger) :
                     )
                 }.toList()
 
+        val orderByFieldsParam =
+            (queryParametersMap["orderByFields"] as List<Map<String, String>>).orEmpty()
+                .map {
+                    OrderBy(
+                        it["fieldName"],
+                        when(it["sortOrder"]){
+                            "ASCENDING" -> QueryParameters.SortOrder.ASCENDING
+                            "DESCENDING" -> QueryParameters.SortOrder.DESCENDING
+                            else -> throw IllegalArgumentException("unsupported value ${it["sortOrder"]}")
+                        }
+                    )
+                }.toList()
+
         val statisticsQueryParameters = StatisticsQueryParameters(statisticDefinitionsParam).apply {
             whereClauseParam?.let {
                 whereClause = it
@@ -129,6 +143,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
                 spatialRelationship = it
             }
             groupByFieldNames.addAll(groupByFieldNamesParam)
+            orderByFields.addAll(orderByFieldsParam)
         }
 
         val statisticsResult = serviceFeatureTable.queryStatisticsAsync(statisticsQueryParameters)

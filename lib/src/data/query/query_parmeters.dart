@@ -69,3 +69,12 @@ enum SpatialRelationshipInQueryParameters {
 
   const SpatialRelationshipInQueryParameters(this.name);
 }
+
+enum SortOrderInQueryParameters{
+  ascending("ASCENDING"),
+  descending("DESCENDING");
+
+  final String alias;
+
+  const SortOrderInQueryParameters(this.alias);
+}

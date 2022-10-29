@@ -6,10 +6,12 @@ class StatisticsQueryParameters {
   final String? whereClause;
   final SpatialRelationshipInQueryParameters? spatialRelationship;
   final List<String> groupByFieldNames;
+  final List<OrderBy> orderByFields;
 
   StatisticsQueryParameters(
       {this.statisticDefinitions = const [],
       this.groupByFieldNames = const [],
+      this.orderByFields = const [],
       this.geometry,
       this.whereClause,
       this.spatialRelationship})
@@ -22,7 +24,8 @@ class StatisticsQueryParameters {
       "geometry": geometry?.toJson(),
       "whereClause": whereClause,
       "spatialRelationship": spatialRelationship?.name,
-      "groupByFieldNames": groupByFieldNames
+      "groupByFieldNames": groupByFieldNames,
+      "orderByFields": orderByFields.map((e) => e.toJson()).toList()
     };
   }
 }
@@ -58,4 +61,15 @@ enum StatisticType {
 
   final String alias;
   const StatisticType(this.alias);
+}
+
+class OrderBy {
+  final String fieldName;
+  final SortOrderInQueryParameters sortOrder;
+
+  OrderBy(this.fieldName, this.sortOrder);
+
+  Map<String, dynamic> toJson() {
+    return {"fieldName": fieldName, "sortOrder": sortOrder.alias};
+  }
 }
