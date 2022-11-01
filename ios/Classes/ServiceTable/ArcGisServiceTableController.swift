@@ -147,6 +147,21 @@ class ArcGisServiceTableController {
 
         let groupByFieldNamesParam: Array<String> = (queryParametersMap["groupByFieldNames"] as? Array<String> ?? [String]())
 
+        let orderByFieldsParam = (queryParametersMap["orderByFields"] as? Array<Dictionary<String, String>> ?? []).map { e in
+            var sortOrder: AGSSortOrder
+            switch (e["sortOrder"]) {
+            case "ASCENDING":
+                sortOrder = AGSSortOrder.ascending
+                break
+            case "DESCENDING":
+                sortOrder = AGSSortOrder.descending
+                break
+            default:
+                sortOrder = AGSSortOrder.ascending
+                break
+            }
+            return AGSOrderBy(fieldName: e["fieldName"] ?? "", sortOrder: <#T##AGSSortOrder##ArcGIS.AGSSortOrder#>)
+        }
 
         let statisticDefinitionsParam = (queryParametersMap["statisticDefinitions"] as? [Dictionary<String, String>] ?? [Dictionary<String, String>]()).map { dictionary -> AGSStatisticDefinition in
             AGSStatisticDefinition(onFieldName: dictionary["fieldName"] ?? "", statisticType: strToStaticType(string: dictionary["statisticType"]), outputAlias: dictionary["outputAlias"])
@@ -154,6 +169,7 @@ class ArcGisServiceTableController {
 
 
         let statisticsQueryParameters = AGSStatisticsQueryParameters(statisticDefinitions: statisticDefinitionsParam)
+        
 
         if let w = whereClause {
             statisticsQueryParameters.whereClause = w
@@ -163,12 +179,12 @@ class ArcGisServiceTableController {
             statisticsQueryParameters.geometry = AGSGeometry.fromFlutter(data: g)
         }
 
-
         if let srsp = spatialRelationShipParam {
             statisticsQueryParameters.spatialRelationship = srsp
         }
 
         statisticsQueryParameters.groupByFieldNames.append(contentsOf: groupByFieldNamesParam)
+        statisticsQueryParameters.orderByFields.append(orderByFieldsParam)
 
         let serviceTable: AGSServiceFeatureTable = AGSServiceFeatureTable(url: url)
         serviceTables.append(serviceTable)
@@ -185,25 +201,25 @@ class ArcGisServiceTableController {
                     return
                 }
 
-                var resultRecords:[[String:Any]] = [[String:Any]]();
+                var resultRecords: [[String: Any]] = [[String: Any]]();
 
                 statistics.forEach { record in
                     var group: Dictionary<String, Any> = [String: Any]();
                     record.group.forEach { key, value in
-                        if(value is String || value is NSNumber || value == nil){
+                        if (value is String || value is NSNumber || value == nil) {
                             group[key] = value
                         }
                     }
 
                     var stat: Dictionary<String, Any> = [String: Any]();
                     record.statistics.forEach { key, value in
-                        if(value is String || value is NSNumber || value == nil){
+                        if (value is String || value is NSNumber || value == nil) {
                             stat[key] = value
                         }
                     }
                     resultRecords.append([
-                        "group":group,
-                        "statistics":stat
+                        "group": group,
+                        "statistics": stat
                     ])
                 }
 
