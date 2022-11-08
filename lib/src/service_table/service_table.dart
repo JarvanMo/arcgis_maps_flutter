@@ -26,4 +26,10 @@ class ServiceTable {
       String url, StatisticsQueryParameters statisticsQueryParameters) async {
     return _serviceTableFlutter.queryStatisticsAsync(url, statisticsQueryParameters);
   }
+
+  Future<num> queryFeatureCount(
+      String url, QueryParameters queryParameters) async {
+    return _serviceTableFlutter.queryFeatureCount(url, queryParameters);
+  }
+
 }

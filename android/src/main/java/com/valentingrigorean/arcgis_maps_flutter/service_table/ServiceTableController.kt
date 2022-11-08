@@ -27,6 +27,9 @@ class ServiceTableController(messenger: BinaryMessenger) :
             "queryStatisticsAsync" -> {
                 queryStatisticsAsync(call, result)
             }
+            "queryFeatureCount" -> {
+                queryFeatureCount(call, result)
+            }
             else -> {}
         }
     }
@@ -83,6 +86,51 @@ class ServiceTableController(messenger: BinaryMessenger) :
             result.success(
                 mapOf<String, List<Any>>(
                     "features" to features
+                )
+            )
+        }
+
+    }
+
+    private fun queryFeatureCount(call: MethodCall, result: MethodChannel.Result) {
+        val serviceFeatureTable = ServiceFeatureTable(call.argument<String?>("url"))
+        val queryParametersMap: Map<Any, Any> =
+            call.argument<Map<Any, Any>?>("queryParameters").orEmpty()
+        val whereClauseParam: String? = queryParametersMap["whereClause"] as String?
+        val spatialRelationshipParam: QueryParameters.SpatialRelationship? =
+            (queryParametersMap["spatialRelationship"] as String?).toSpatialRelationship()
+
+
+        val geometryParamJson = queryParametersMap["geometry"]
+
+        var geometryParam: Geometry? = null
+        if (geometryParamJson != null) {
+            geometryParam = Convert.toGeometry(geometryParamJson)
+        }
+
+        val query = QueryParameters().apply {
+            isReturnGeometry = queryParametersMap["isReturnGeometry"] as Boolean
+
+            if (geometryParam != null) {
+                geometry = geometryParam
+            }
+            maxFeatures = queryParametersMap["maxFeatures"] as Int
+            if (whereClauseParam != null) {
+                whereClause = whereClauseParam
+            }
+            if (spatialRelationshipParam != null) {
+                spatialRelationship = spatialRelationshipParam
+            }
+            this.resultOffset = queryParametersMap["resultOffset"] as Int
+        }
+
+        val future = serviceFeatureTable.queryFeatureCountAsync(query)
+        future.addDoneListener {
+
+            val count = future.get()
+            result.success(
+                mapOf(
+                    "count" to count
                 )
             )
         }

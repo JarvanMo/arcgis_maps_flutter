@@ -30,4 +30,14 @@ class MethodChannelServiceTableFlutter extends ServiceTableFlutterPlatform {
 
     return StatisticResult.fromJson(result);
   }
+
+  @override
+  Future<num> queryFeatureCount(
+      String url, QueryParameters queryParameters) async {
+    Map<dynamic,dynamic> results = await _channel.invokeMethod("queryFeatureCount", {
+      "url": url,
+      "queryParameters": queryParameters.toJson(),
+    });
+    return results["count"];
+  }
 }
