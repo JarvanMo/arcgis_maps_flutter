@@ -29,6 +29,9 @@ class ArcGisServiceTableController {
         case "queryFeatures":
             queryFeatures(call, result: result)
             break
+        case "queryFeatureCount":
+            queryCount(call, result: result)
+            break
         case "queryStatisticsAsync":
             queryStatisticsAsync(call, result: result)
             break
@@ -228,6 +231,67 @@ class ArcGisServiceTableController {
             }
         }
 
+    }
+
+
+    private func queryCount(_ call: FlutterMethodCall,
+                               result: @escaping FlutterResult) {
+        let emptyResult: Dictionary<String, NSNumber> = ["count": 0]
+        guard let data = call.arguments as? Dictionary<String, Any> else {
+            result(emptyResult)
+            return
+        }
+
+        guard let url = URL(string: data["url"] as! String) else {
+            result(emptyResult)
+            return
+        }
+
+
+        guard let queryParameterMap = data["queryParameters"] as? Dictionary<String, Any> else {
+            result(emptyResult)
+            return
+        }
+
+        let whereClause: String? = queryParameterMap["whereClause"] as? String
+
+
+        let geometryParam: Dictionary<String, Any>? = queryParameterMap["geometry"] as? Dictionary<String, Any>
+        let spatialRelationShipParam: AGSSpatialRelationship? = strToSpatialRelationShip(string: queryParameterMap["spatialRelationship"] as? String)
+
+        let query = AGSQueryParameters()
+
+        query.returnGeometry = queryParameterMap["isReturnGeometry"] as? Bool ?? true
+        query.maxFeatures = queryParameterMap["maxFeatures"] as! Int
+        query.resultOffset = queryParameterMap["resultOffset"] as! Int
+
+        if let g = geometryParam {
+            query.geometry = AGSGeometry.fromFlutter(data: g)
+        }
+
+        if let w = whereClause {
+            query.whereClause = w
+        }
+
+        if let srsp = spatialRelationShipParam {
+            query.spatialRelationship = srsp
+        }
+
+
+//        [weak self]
+        let serviceTable: AGSServiceFeatureTable = AGSServiceFeatureTable(url: url)
+        serviceTables.append(serviceTable)
+        serviceTable.queryFeatureCount(with: query) { [weak self](queryResult, error) in
+            if let index = self?.serviceTables.firstIndex(of: serviceTable) {
+                self?.serviceTables.remove(at: index)
+            }
+
+            if error != nil {
+                result(emptyResult)
+            } else {
+                result(["count": queryResult])
+            }
+        }
     }
 
     private func strToStaticType(string: String?) -> AGSStatisticType {
