@@ -163,7 +163,7 @@ class ArcGisServiceTableController {
                 sortOrder = AGSSortOrder.ascending
                 break
             }
-            return AGSOrderBy(fieldName: e["fieldName"] ?? "", sortOrder: <#T##AGSSortOrder##ArcGIS.AGSSortOrder#>)
+            return AGSOrderBy(fieldName: e["fieldName"] ?? "", sortOrder: sortOrder)
         }
 
         let statisticDefinitionsParam = (queryParametersMap["statisticDefinitions"] as? [Dictionary<String, String>] ?? [Dictionary<String, String>]()).map { dictionary -> AGSStatisticDefinition in
