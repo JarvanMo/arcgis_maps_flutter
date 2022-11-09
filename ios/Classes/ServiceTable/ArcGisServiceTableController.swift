@@ -187,7 +187,7 @@ class ArcGisServiceTableController {
         }
 
         statisticsQueryParameters.groupByFieldNames.append(contentsOf: groupByFieldNamesParam)
-        statisticsQueryParameters.orderByFields.append(orderByFieldsParam)
+        statisticsQueryParameters.orderByFields.append(contentsOf: orderByFieldsParam)
 
         let serviceTable: AGSServiceFeatureTable = AGSServiceFeatureTable(url: url)
         serviceTables.append(serviceTable)
