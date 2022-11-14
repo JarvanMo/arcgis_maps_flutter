@@ -1,5 +1,6 @@
 package com.valentingrigorean.arcgis_maps_flutter.service_table
 
+import com.esri.arcgisruntime.concurrent.ListenableFuture
 import com.esri.arcgisruntime.data.*
 import com.esri.arcgisruntime.data.QueryParameters.OrderBy
 import com.esri.arcgisruntime.geometry.Geometry
@@ -18,6 +19,8 @@ class ServiceTableController(messenger: BinaryMessenger) :
     init {
         channel.setMethodCallHandler(this)
     }
+
+    private val listenableResult:MutableList<ListenableFuture<*>> = mutableListOf()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -77,12 +80,13 @@ class ServiceTableController(messenger: BinaryMessenger) :
             else -> ServiceFeatureTable.QueryFeatureFields.LOAD_ALL
         }
         val future = serviceFeatureTable.queryFeaturesAsync(query, queryFields)
+        listenableResult.add(future)
         future.addDoneListener {
 
             val features = future.get().map {
                 it.toMap()
             }.toList()
-
+            listenableResult.remove(future)
             result.success(
                 mapOf<String, List<Any>>(
                     "features" to features
@@ -125,7 +129,10 @@ class ServiceTableController(messenger: BinaryMessenger) :
         }
 
         val future = serviceFeatureTable.queryFeatureCountAsync(query)
+        listenableResult.add(future)
+
         future.addDoneListener {
+            listenableResult.remove(future)
 
             val count = future.get()
             result.success(
@@ -195,9 +202,11 @@ class ServiceTableController(messenger: BinaryMessenger) :
         }
 
         val statisticsResult = serviceFeatureTable.queryStatisticsAsync(statisticsQueryParameters)
+        listenableResult.add(statisticsResult)
+
         statisticsResult.addDoneListener {
             val realResult = statisticsResult.get()
-
+            listenableResult.remove(statisticsResult)
             val resultRecords: MutableList<Map<String, Any>> = mutableListOf()
 
             realResult.iterator().forEach {
