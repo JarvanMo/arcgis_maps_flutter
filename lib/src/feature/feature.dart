@@ -78,7 +78,13 @@ class FeatureTable {
 
   FeatureTable.fromJson(Map<Object?, Object?> json)
       : this.named(
-            fields: [],
+            fields: ((){
+              List<FeatureTableField> result = [];
+              (json["fields"] as List<Map<Object?, Object?>>?)?.forEach((e) {
+                result.add(FeatureTableField.fromJson(json)) ;
+              });
+              return result;
+            }.call()),
             tableName: json["tableName"] as String?,
             displayName: json["displayName"] as String?,
             featureTypes: ((){
@@ -122,11 +128,11 @@ class FeatureTableField {
   FeatureTableField(
       {required this.fieldType, required this.alias, required this.name});
 
-  FeatureTableField.fromJson(Map<String, dynamic> json)
+  FeatureTableField.fromJson(Map<Object?, Object?> json)
       : this(
-            fieldType: _createFieldTypeFromString(json["fieldType"]),
-            alias: json["alias"],
-            name: json["name"]);
+            fieldType: _createFieldTypeFromString(json["fieldType"] as String),
+            alias: json["alias"] as String,
+            name: json["name"] as String);
 
   Map<String, dynamic> toJson() {
     return {"fieldType": fieldType.name, "alias": alias, "name": name};
