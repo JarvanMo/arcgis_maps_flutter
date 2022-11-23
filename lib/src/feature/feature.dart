@@ -80,8 +80,10 @@ class FeatureTable {
       : this.named(
             fields: ((){
               List<FeatureTableField> result = [];
-              (json["fields"] as List<Map<Object?, Object?>>?)?.forEach((e) {
-                result.add(FeatureTableField.fromJson(json)) ;
+              (json["fields"] as List<Object?>?)?.forEach((e) {
+                if(e is Map<Object?, Object?>){
+                  result.add(FeatureTableField.fromJson(e)) ;
+                }
               });
               return result;
             }.call()),
