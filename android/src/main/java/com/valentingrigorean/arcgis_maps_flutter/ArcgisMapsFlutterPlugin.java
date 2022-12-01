@@ -16,8 +16,6 @@ import com.valentingrigorean.arcgis_maps_flutter.geometry.GeometryEngineControll
 import com.valentingrigorean.arcgis_maps_flutter.map.ArcgisMapFactory;
 import com.valentingrigorean.arcgis_maps_flutter.scene.ArcgisSceneViewFactory;
 import com.valentingrigorean.arcgis_maps_flutter.service_table.ServiceTableController;
-import com.valentingrigorean.arcgis_maps_flutter.tasks.geocode.LocatorTaskController;
-import com.valentingrigorean.arcgis_maps_flutter.tasks.networkanalysis.RouteTaskController;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -38,16 +36,13 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
     private GeometryEngineController geometryEngineController;
     private CoordinateFormatterController coordinateFormatterController;
-    private AuthenticationManagerController authenticationManagerController;
-    private LocatorTaskController locatorTaskController;
-    private RouteTaskController routeTaskController;
     private ArcgisNativeObjectsController nativeObjectsController;
-    private ServiceTableController serviceTableController;
     private MethodChannel channel;
+    private AuthenticationManagerController authenticationManagerController;
+    private ServiceTableController serviceTableController;
 
     @Nullable
     private Lifecycle lifecycle;
-
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
@@ -64,14 +59,10 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
         coordinateFormatterController = new CoordinateFormatterController(binding.getBinaryMessenger());
 
+        nativeObjectsController = new ArcgisNativeObjectsController(binding.getBinaryMessenger(), new ArcgisNativeObjectFactoryImpl(binding.getApplicationContext()));
+
         authenticationManagerController = new AuthenticationManagerController(binding.getBinaryMessenger(), binding.getApplicationContext());
-
-        locatorTaskController = new LocatorTaskController(binding.getBinaryMessenger());
-
-        routeTaskController = new RouteTaskController(binding.getApplicationContext(), binding.getBinaryMessenger());
-
         serviceTableController = new ServiceTableController(binding.getBinaryMessenger());
-        nativeObjectsController = new ArcgisNativeObjectsController(binding.getBinaryMessenger(), new ArcgisNativeObjectFactoryImpl());
     }
 
     @Override
@@ -83,20 +74,14 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
         coordinateFormatterController.dispose();
         coordinateFormatterController = null;
 
+        nativeObjectsController.dispose();
+        nativeObjectsController = null;
+
         authenticationManagerController.dispose();
         authenticationManagerController = null;
 
-        locatorTaskController.dispose();
-        locatorTaskController = null;
-
-        routeTaskController.dispose();
-        routeTaskController = null;
-
         serviceTableController.dispose();
         serviceTableController = null;
-
-        nativeObjectsController.dispose();
-        nativeObjectsController = null;
     }
 
     @Override

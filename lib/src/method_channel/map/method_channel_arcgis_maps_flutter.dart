@@ -575,29 +575,35 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
         );
         break;
       case 'map#onTap':
-        final args = call.arguments['position'];
-        AGSPoint point = AGSPoint.fromJson(args)!;
+        final args = call.arguments;
+        final screenPoint = _fromJson(args['screenPoint']);
+        AGSPoint position = AGSPoint.fromJson(args['position'])!;
         _mapEventStreamController.add(
           MapTapEvent(
             mapId,
-            point,
+            screenPoint: screenPoint,
+            position: position,
           ),
         );
         break;
       case 'map#onLongPress':
-        final args = call.arguments['position'];
-        AGSPoint point = AGSPoint.fromJson(args)!;
+        final args = call.arguments;
+        final screenPoint = _fromJson(args['screenPoint']);
+        AGSPoint position = AGSPoint.fromJson(args['position'])!;
         _mapEventStreamController.add(
           MapLongPressEvent(
             mapId,
-            point,
+            screenPoint: screenPoint,
+            position: position,
           ),
         );
         break;
       case 'map#onIdentifyLayers':
-        final List<dynamic> args = call.arguments;
+        final Map<dynamic, dynamic> args = call.arguments;
+        final screenPoint = _fromJson(args['screenPoint']);
+        final position = AGSPoint.fromJson(args['position'])!;
         final List<IdentifyLayerResult> results = [];
-        for (var item in args) {
+        for (var item in args['results']) {
           final String layerName = item['layerName']!;
           final List<dynamic> elementsData = item['elements']!;
           final List<GeoElement> elements = [];
@@ -609,7 +615,14 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
             elements: elements,
           ));
         }
-        _mapEventStreamController.add(IdentifyLayersEvent(mapId, results));
+        _mapEventStreamController.add(
+          IdentifyLayersEvent(
+            mapId,
+            screenPoint: screenPoint,
+            position: position,
+            results: results,
+          ),
+        );
         break;
       case 'map#timeExtentChanged':
         _mapEventStreamController.add(
@@ -630,4 +643,9 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
         throw MissingPluginException();
     }
   }
+}
+
+Offset _fromJson(dynamic json) {
+  final List<dynamic> data = json;
+  return Offset(data[0]!.toDouble(), data[1]!.toDouble());
 }
