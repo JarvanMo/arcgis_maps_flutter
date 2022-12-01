@@ -22,10 +22,12 @@ import com.esri.arcgisruntime.geometry.Geometry;
 import com.esri.arcgisruntime.geometry.GeometryEngine;
 import com.esri.arcgisruntime.geometry.Point;
 import com.esri.arcgisruntime.layers.Layer;
+import com.esri.arcgisruntime.layers.ArcGISVectorTiledLayer;
 import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
 import com.esri.arcgisruntime.mapping.LayerList;
 import com.esri.arcgisruntime.mapping.MobileMapPackage;
+import com.esri.arcgisruntime.mapping.Basemap;
 import com.esri.arcgisruntime.mapping.Viewpoint;
 import com.esri.arcgisruntime.mapping.view.BackgroundGrid;
 import com.esri.arcgisruntime.mapping.view.DrawStatusChangedEvent;
@@ -351,7 +353,11 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
             }
             break;
             case "map#getMapRotation": {
-                result.success(mapView.getMapRotation());
+                if (mapView.getMap() != null) {
+                    result.success(mapView.getMapRotation());
+                } else {
+                    result.success(0.0);
+                }
             }
             break;
             case "map#getWanderExtentFactor": {
@@ -371,7 +377,7 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
             }
             break;
             case "map#setViewpoint": {
-                setViewpoint(call.arguments,true,result);
+                setViewpoint(call.arguments, true, result);
             }
             break;
             case "map#setViewpointGeometry": {
@@ -438,7 +444,11 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
             }
             break;
             case "map#getMapScale": {
-                result.success(mapView.getMapScale());
+                if (mapView.getMap() != null) {
+                    result.success(mapView.getMapScale());
+                } else {
+                    result.success(0.0);
+                }
             }
             break;
             case "layers#update": {
@@ -734,23 +744,38 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         final String offlinePath = (String) data.get("offlinePath");
         final int mapIndex = (int) data.get("offlineMapIndex");
 
-        final MobileMapPackage mobileMapPackage = new MobileMapPackage(offlinePath);
-        mobileMapPackage.addDoneLoadingListener(() -> {
-            if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
-                final ArcGISMap map = mobileMapPackage.getMaps().get(mapIndex);
-                changeMap(map);
-            } else {
-                Log.w(TAG, "loadOfflineMap: Failed to load map." + mobileMapPackage.getLoadError().getMessage());
-                if (mobileMapPackage.getLoadError().getCause() != null) {
-                    Log.w(TAG, "loadOfflineMap: Failed to load map." + mobileMapPackage.getLoadError().getCause().getMessage());
-                    methodChannel.invokeMethod("map#loaded", mobileMapPackage.getLoadError().getCause().getMessage());
-                } else {
-                    methodChannel.invokeMethod("map#loaded", mobileMapPackage.getLoadError().getMessage());
-                }
-            }
-        });
+        final String[] parts = offlinePath.split("\\.");
+        final String ext = parts[parts.length - 1];
 
-        mobileMapPackage.loadAsync();
+        switch (ext) {
+            case "vtpk":
+                final ArcGISVectorTiledLayer baseLayer = new ArcGISVectorTiledLayer(offlinePath);
+                final Basemap baseMap = new Basemap(baseLayer);
+                final ArcGISMap vMap = new ArcGISMap();
+                vMap.setBasemap(baseMap);
+                changeMap(vMap);
+                break;
+            // For offline maps we use the folder not the extension
+            case "mmpk":
+            default:
+                final MobileMapPackage mobileMapPackage = new MobileMapPackage(offlinePath.replace(".mmpk", ""));
+                mobileMapPackage.addDoneLoadingListener(() -> {
+                    if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
+                        final ArcGISMap map = mobileMapPackage.getMaps().get(mapIndex);
+                        changeMap(map);
+                    } else {
+                        Log.w(TAG, "loadOfflineMap: Failed to load map." + mobileMapPackage.getLoadError().getMessage());
+                        if (mobileMapPackage.getLoadError().getCause() != null) {
+                            Log.w(TAG, "loadOfflineMap: Failed to load map." + mobileMapPackage.getLoadError().getCause().getMessage());
+                            methodChannel.invokeMethod("map#loaded", mobileMapPackage.getLoadError().getCause().getMessage());
+                        } else {
+                            methodChannel.invokeMethod("map#loaded", mobileMapPackage.getLoadError().getMessage());
+                        }
+                    }
+                });
+                mobileMapPackage.loadAsync();
+                break;
+        }
     }
 
     private void changeMap(ArcGISMap map) {
@@ -839,7 +864,7 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         }
         final Object viewPoint = params.get("viewpoint");
         if (viewPoint != null) {
-            setViewpoint(viewPoint, false,null);
+            setViewpoint(viewPoint, false, null);
         }
 
         final Object options = params.get("options");

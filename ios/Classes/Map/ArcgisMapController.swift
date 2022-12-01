@@ -529,6 +529,27 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
         let offlinePath = args["offlinePath"] as! String
         let mapIndex = args["offlineMapIndex"] as! Int
 
+        let ext = offlinePath.components(separatedBy: ".").last
+
+        switch ext {
+        case "vtpk":
+            // .vtpk extension is automatically added by the ArcGIS Runtime
+            let vectorTileLayer = AGSArcGISVectorTiledLayer(name: offlinePath.replacingOccurrences(of: ".vtpk", with: ""))
+            let basemap = AGSBasemap(baseLayer: vectorTileLayer)
+            let map = AGSMap(basemap: basemap)
+            changeMap(map: map)
+            return
+        case "mmpk":
+            // For offline maps we use the folder not the extension
+            loadMobileMapPackage(offlinePath: offlinePath.replacingOccurrences(of: ".mmpk", with: ""), mapIndex: mapIndex)
+            return
+        default:
+            loadMobileMapPackage(offlinePath: offlinePath, mapIndex: mapIndex)
+            return
+        }
+    }
+
+    private func loadMobileMapPackage(offlinePath:String, mapIndex:Int) {
         let mobileMapPackage = AGSMobileMapPackage(fileURL: URL(string: offlinePath)!)
         mobileMapPackage.load { [weak self] error in
             guard let self = self else {
@@ -747,7 +768,7 @@ extension ArcgisMapController: AGSGeoViewTouchDelegate {
         }
 
         if trackIdentityLayers {
-            layerHandle = mapView.identifyLayers(atScreenPoint: lastScreenPoint, tolerance: 12, returnPopupsOnly: false, completion: identifyLayersCallback)
+            layerHandle = mapView.identifyLayers(atScreenPoint: lastScreenPoint, tolerance: 10, returnPopupsOnly: false, completion: identifyLayersCallback)
         } else {
             sendOnMapTap(screenPoint: lastScreenPoint)
         }
@@ -768,7 +789,9 @@ extension ArcgisMapController: AGSGeoViewTouchDelegate {
             return
         }
 
-        channel.invokeMethod("map#onIdentifyLayers", arguments: results.toJSONFlutter())
+        let position = mapView.screen(toLocation: lastScreenPoint)
+
+        channel.invokeMethod("map#onIdentifyLayers", arguments: ["results": results.toJSONFlutter(), "screenPoint": lastScreenPoint.toJSONFlutter(), "position": position.toJSONFlutter()])
     }
 
     private func onTapGraphicsCompleted(results: [AGSIdentifyGraphicsOverlayResult]?,
@@ -798,13 +821,13 @@ extension ArcgisMapController: AGSGeoViewTouchDelegate {
 
     private func sendOnMapTap(screenPoint: CGPoint) {
         if let json = mapView.screen(toLocation: screenPoint).toJSONFlutter() {
-            channel.invokeMethod("map#onTap", arguments: ["screenPoint": screenPoint.toJSON(), "position": json])
+            channel.invokeMethod("map#onTap", arguments: ["screenPoint": screenPoint.toJSONFlutter(), "position": json])
         }
     }
 
     private func sendOnMapLongPress(screenPoint: CGPoint) {
         if let json = mapView.screen(toLocation: screenPoint).toJSONFlutter() {
-            channel.invokeMethod("map#onLongPress", arguments: ["screenPoint": screenPoint.toJSON(), "position": json])
+            channel.invokeMethod("map#onLongPress", arguments: ["screenPoint": screenPoint.toJSONFlutter(), "position": json])
         }
     }
 
