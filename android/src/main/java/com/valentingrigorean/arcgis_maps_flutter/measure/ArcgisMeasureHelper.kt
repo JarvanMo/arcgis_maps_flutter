@@ -1,8 +1,7 @@
 package com.valentingrigorean.arcgis_maps_flutter.measure
 
-import com.valentingrigorean.arcgis_maps_flutter.workaround.FlutterWorkAround
 
-interface ArcgisMeasureHelper :FlutterWorkAround{
+interface ArcgisMeasureHelper {
     fun initMeasure()
     fun reset()
     fun clear(): Double

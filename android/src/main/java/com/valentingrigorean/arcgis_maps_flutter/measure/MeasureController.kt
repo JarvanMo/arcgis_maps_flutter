@@ -5,11 +5,11 @@ import com.esri.arcgisruntime.mapping.view.MapView
 import io.flutter.plugin.common.MethodChannel
 
 class MeasureController(
-    arcMapView: MapView, containerView: View
+    arcMapView: MapView
 ) {
 
-    private val distanceMeasure: ArcgisMeasureHelper = DistanceMeasureArcGisHelper(arcMapView,containerView)
-    private val areaMeasure: ArcgisMeasureHelper = AreaMeasureHelper(arcMapView,containerView)
+    private val distanceMeasure: ArcgisMeasureHelper = DistanceMeasureArcGisHelper(arcMapView)
+    private val areaMeasure: ArcgisMeasureHelper = AreaMeasureHelper(arcMapView)
 
     fun onAreaMeasure(
         action: String,

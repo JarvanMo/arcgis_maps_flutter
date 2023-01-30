@@ -12,8 +12,7 @@ import com.esri.arcgisruntime.symbology.SimpleLineSymbol
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol
 
 class DistanceMeasureArcGisHelper(
-    private val arcMapView: MapView,
-    override val containerView: View
+    private val arcMapView: MapView
 ) : ArcgisMeasureHelper {
     private var measureMode = MeasureMode.CENTER
     private var measureEnabled = false

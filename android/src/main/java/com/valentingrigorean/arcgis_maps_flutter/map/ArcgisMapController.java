@@ -127,9 +127,12 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         mapView = new FlutterMapView(context);
 
         //added by Jarvanmo
-        mapView.setBackgroundGrid(new BackgroundGrid(0xFFF5F5F5, 0xFFF5F5F5, 0F, 10F));
+        MapView realMapView = mapView.getMapView();
+        if (realMapView != null){
+            realMapView.setBackgroundGrid(new BackgroundGrid(0xFFF5F5F5, 0xFFF5F5F5, 0F, 10F));
+            measureController = new MeasureController(realMapView);
+        }
         mapView.getSelectionProperties().setColor(Color.BLACK);
-        measureController = new MeasureController(mapView,mapContainer);
 
         scaleBarController = new ScaleBarController(context, mapView, mapView);
 

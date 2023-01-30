@@ -11,7 +11,6 @@ import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol
 
 class AreaMeasureHelper(
     private val arcMapView: MapView,
-    override val containerView: View
 ) : ArcgisMeasureHelper {
     private var measureMode = MeasureMode.CENTER
     private var measureEnabled = false
