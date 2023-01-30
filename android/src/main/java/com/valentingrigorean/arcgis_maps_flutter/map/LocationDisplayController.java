@@ -2,6 +2,7 @@ package com.valentingrigorean.arcgis_maps_flutter.map;
 
 import androidx.annotation.NonNull;
 
+import com.esri.arcgisruntime.ArcGISRuntimeException;
 import com.esri.arcgisruntime.mapping.view.Graphic;
 import com.esri.arcgisruntime.mapping.view.GraphicsOverlay;
 import com.esri.arcgisruntime.mapping.view.LocationDisplay;
@@ -17,7 +18,7 @@ public class LocationDisplayController implements MapTouchGraphicDelegate, Locat
     private static final String LOCATION_ATTRIBUTE = "my_location_attribute";
 
     private final MethodChannel channel;
-    private final MapView mapView;
+    private final FlutterMapViewDelegate flutterMapViewDelegate;
     private final LocationDisplay locationDisplay;
     private final GraphicsOverlay locationGraphicsOverlay;
 
@@ -30,14 +31,14 @@ public class LocationDisplayController implements MapTouchGraphicDelegate, Locat
 
     private boolean trackUserLocationTap = false;
 
-    public LocationDisplayController(MethodChannel methodChannel, MapView mapView) {
+    public LocationDisplayController(MethodChannel methodChannel, FlutterMapViewDelegate flutterMapViewDelegate) {
         this.channel = methodChannel;
-        this.mapView = mapView;
-        this.locationDisplay = mapView.getLocationDisplay();
+        this.flutterMapViewDelegate = flutterMapViewDelegate;
+        this.locationDisplay = flutterMapViewDelegate.getLocationDisplay();
         this.locationGraphicsOverlay = new GraphicsOverlay();
         this.locationGraphicsOverlay.setOpacity(0);
         this.locationGraphic = new Graphic();
-        this.locationGraphic.setGeometry(mapView.getLocationDisplay().getMapLocation());
+        this.locationGraphic.setGeometry(flutterMapViewDelegate.getLocationDisplay().getMapLocation());
         this.locationGraphic.getAttributes().put(LOCATION_ATTRIBUTE, true);
         this.locationGraphic.setSymbol(locationDisplay.getDefaultSymbol());
         this.locationGraphicsOverlay.getGraphics().add(locationGraphic);
@@ -52,6 +53,11 @@ public class LocationDisplayController implements MapTouchGraphicDelegate, Locat
         locationDisplay.removeAutoPanModeChangedListener(this);
         locationDisplay.removeLocationChangedListener(this);
 
+        if (startResult != null) {
+            startResult.success(null);
+            startResult = null;
+        }
+
         channel.setMethodCallHandler(null);
     }
 
@@ -59,9 +65,9 @@ public class LocationDisplayController implements MapTouchGraphicDelegate, Locat
         if (this.trackUserLocationTap != trackUserLocationTap) {
             this.trackUserLocationTap = trackUserLocationTap;
             if (trackUserLocationTap) {
-                mapView.getGraphicsOverlays().add(locationGraphicsOverlay);
+                flutterMapViewDelegate.getGraphicsOverlays().add(locationGraphicsOverlay);
             } else {
-                mapView.getGraphicsOverlays().remove(locationGraphicsOverlay);
+                flutterMapViewDelegate.getGraphicsOverlays().remove(locationGraphicsOverlay);
             }
         }
     }
@@ -86,19 +92,12 @@ public class LocationDisplayController implements MapTouchGraphicDelegate, Locat
 
     @Override
     public void onStatusChanged(LocationDisplay.DataSourceStatusChangedEvent dataSourceStatusChangedEvent) {
-        locationGraphic.setGeometry(locationDisplay.getMapLocation());
-        if (startResult != null) {
-            if (dataSourceStatusChangedEvent.isStarted()) {
-                startResult.success(null);
-            } else {
-                String error = "Unknown error";
-                if (dataSourceStatusChangedEvent.getError() != null) {
-                    error = dataSourceStatusChangedEvent.getError().getMessage();
-                }
-                startResult.error("Failed to start locationDisplay", error, null);
-            }
-            startResult = null;
+        try {
+            locationGraphic.setGeometry(locationDisplay.getMapLocation());
+        } catch (ArcGISRuntimeException e) {
+            //ignore
         }
+        handleStatusChanged(dataSourceStatusChangedEvent.isStarted(), dataSourceStatusChangedEvent.getError());
     }
 
 
@@ -182,6 +181,22 @@ public class LocationDisplayController implements MapTouchGraphicDelegate, Locat
             default:
                 result.notImplemented();
                 break;
+        }
+    }
+
+    private void handleStatusChanged(boolean isStarted,
+                                     Throwable error) {
+        if (startResult != null) {
+            if (isStarted) {
+                startResult.success(null);
+            } else {
+                String errorMessage = "Unknown error";
+                if (error != null) {
+                    errorMessage = error.getMessage();
+                }
+                startResult.error("Failed to start locationDisplay", errorMessage, null);
+            }
+            startResult = null;
         }
     }
 

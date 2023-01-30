@@ -16,11 +16,12 @@ class LocationDisplayController {
 
     private let methodChannel: FlutterMethodChannel
 
+    var isDisposed: Bool = false
+
     init(methodChannel: FlutterMethodChannel, mapView: AGSMapView) {
         self.methodChannel = methodChannel
         self.mapView = mapView
         locationDisplay = mapView.locationDisplay
-
         locationGraphicsOverlay = AGSGraphicsOverlay()
         locationGraphicsOverlay.opacity = 0;
         locationGraphic = AGSGraphic()
@@ -29,16 +30,30 @@ class LocationDisplayController {
         locationGraphic.zIndex = Int.max
         locationGraphic.geometry = locationDisplay.mapLocation
         locationGraphicsOverlay.graphics.add(locationGraphic)
-        locationDisplay.autoPanModeChangedHandler = autoPanModeChanged
-        locationDisplay.locationChangedHandler = locationChanged
-        locationDisplay.dataSourceStatusChangedHandler = dataSourceStatusChanged
+        locationDisplay.autoPanModeChangedHandler = { [weak self] mode in
+            DispatchQueue.main.dispatchMainIfNeeded {
+                self?.autoPanModeChanged(mode)
+            }
+        }
+        locationDisplay.locationChangedHandler = { [weak self] location in
+            DispatchQueue.main.dispatchMainIfNeeded {
+                self?.locationChanged(location: location)
+            }
+        }
+        locationDisplay.dataSourceStatusChangedHandler = { [weak self] status in
+            DispatchQueue.main.dispatchMainIfNeeded {
+                self?.dataSourceStatusChanged(status: status)
+            }
+        }
 
-        self.methodChannel.setMethodCallHandler(handle)
+        setMethodCallHandlers()
     }
 
     deinit {
+        isDisposed = true
         locationDisplay.autoPanModeChangedHandler = nil
         locationDisplay.locationChangedHandler = nil
+        locationDisplay.dataSourceStatusChangedHandler = nil
         methodChannel.setMethodCallHandler(nil)
     }
 
@@ -55,9 +70,16 @@ class LocationDisplayController {
 
     open var locationTapHandler: (() -> Void)?
 
-    private func handle(_ call: FlutterMethodCall,
-                        result: @escaping FlutterResult) -> Void {
+    private func setMethodCallHandlers() -> Void {
+        methodChannel.setMethodCallHandler({ [weak self](call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+            guard let self else {
+                return
+            }
+            self.methodCallHandler(call: call, result: result)
+        })
+    }
 
+    private func methodCallHandler(call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch (call.method) {
         case "getStarted":
             result(locationDisplay.started)
@@ -126,10 +148,16 @@ class LocationDisplayController {
     }
 
     private func autoPanModeChanged(_ mode: AGSLocationDisplayAutoPanMode) {
+        if (isDisposed) {
+            return
+        }
         methodChannel.invokeMethod("onAutoPanModeChanged", arguments: mode.rawValue)
     }
 
     private func locationChanged(location: AGSLocation) {
+        if (isDisposed) {
+            return
+        }
         methodChannel.invokeMethod("onLocationChanged", arguments: location.toJSONFlutter())
         guard let position = location.position else {
             return
@@ -138,6 +166,9 @@ class LocationDisplayController {
     }
 
     private func dataSourceStatusChanged(status: Bool) {
+        if (isDisposed) {
+            return
+        }
         locationGraphic.geometry = locationDisplay.mapLocation
     }
 }

@@ -19,6 +19,8 @@ class ArcgisMapController {
         .setTimeExtentChangedListener(mapId, register);
   });
 
+  bool _isDisposed = false;
+
   final int mapId;
 
   ArcgisMapController._(
@@ -37,6 +39,8 @@ class ArcgisMapController {
   }
 
   final LocationDisplay locationDisplay;
+
+  bool get isDisposed => _isDisposed;
 
   Future<List<LegendInfoResult>> getLegendInfosForLayer(Layer layer) async {
     return await ArcgisMapsFlutterPlatform.instance
@@ -88,26 +92,32 @@ class ArcgisMapController {
   }
 
   void addViewpointChangedListener(ViewpointChangedListener listener) {
+    if (_isDisposed) return;
     _viewpointChangedHandlers.addHandler(listener);
   }
 
   void removeViewpointChangedListener(ViewpointChangedListener listener) {
+    if (_isDisposed) return;
     _viewpointChangedHandlers.removeHandler(listener);
   }
 
   void addLayersChangedListener(LayersChangedListener listener) {
+    if (_isDisposed) return;
     _layersChangedHandlers.addHandler(listener);
   }
 
   void removeLayersChangedListener(LayersChangedListener listener) {
+    if (_isDisposed) return;
     _layersChangedHandlers.removeHandler(listener);
   }
 
   void addTimeExtentChangedListener(TimeExtentChangedListener listener) {
+    if (_isDisposed) return;
     _timeExtentChangedHandlers.addHandler(listener);
   }
 
   void removeTimeExtentChangedListener(TimeExtentChangedListener listener) {
+    if (_isDisposed) return;
     _timeExtentChangedHandlers.removeHandler(listener);
   }
 
@@ -286,6 +296,13 @@ class ArcgisMapController {
 
   /// Disposes of the platform resources
   void dispose() {
+    if (_isDisposed) {
+      return;
+    }
+    _isDisposed = true;
+    _viewpointChangedHandlers.clearAll();
+    _layersChangedHandlers.clearAll();
+    _timeExtentChangedHandlers.clearAll();
     locationDisplay.dispose();
     ArcgisMapsFlutterPlatform.instance.dispose(mapId);
   }
@@ -357,6 +374,12 @@ class ArcgisMapController {
           (UserLocationTapEvent e) => _arcgisMapState.onUserLocationTap(),
         );
   }
+
+  void _checkIfDisposed() {
+    if (_isDisposed) {
+      throw StateError('Cannot access a disposed ArcGISMapController.');
+    }
+  }
 }
 
 typedef _RegisterHandlerCallback = void Function(bool register);
@@ -388,6 +411,13 @@ class _EventBaseHandler<T> {
     if (_isWired && _handlers.isEmpty) {
       _isWired = false;
       registerHandlerCallback(false);
+    }
+  }
+
+  void clearAll() {
+    _handlers.clear();
+    if (_isWired) {
+      _isWired = false;
     }
   }
 }
