@@ -89,10 +89,9 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
     private final MapLoadedListener mapLoadedListener = new MapLoadedListener();
 
     @Nullable
-    private MapView mapView;
+    private FlutterMapView mapView;
     private MapViewOnTouchListener mapViewOnTouchListener;
 
-    private FrameLayout mapContainer;
     private ScaleBarController scaleBarController;
     private InvalidateMapHelper invalidateMapHelper;
 
@@ -125,18 +124,14 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         methodChannel = new MethodChannel(binaryMessenger, "plugins.flutter.io/arcgis_maps_" + id);
         methodChannel.setMethodCallHandler(this);
 
-        mapContainer = new FrameLayout(context);
+        mapView = new FlutterMapView(context);
 
-        mapView = new MapView(context);
         //added by Jarvanmo
         mapView.setBackgroundGrid(new BackgroundGrid(0xFFF5F5F5, 0xFFF5F5F5, 0F, 10F));
         mapView.getSelectionProperties().setColor(Color.BLACK);
         measureController = new MeasureController(mapView,mapContainer);
 
-        mapContainer.addView(mapView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        scaleBarController = new ScaleBarController(context, mapView, mapContainer);
+        scaleBarController = new ScaleBarController(context, mapView, mapView);
 
         selectionPropertiesHandler = new SelectionPropertiesHandler(mapView.getSelectionProperties());
 
@@ -172,7 +167,7 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         mapViewOnTouchListener.addGraphicDelegate(locationDisplayController);
 
         mapView.getGraphicsOverlays().add(graphicsOverlay);
-        mapView.setOnTouchListener(mapViewOnTouchListener);
+        mapView.getMapView().setOnTouchListener(mapViewOnTouchListener);
         mapView.addViewpointChangedListener(this);
 
         invalidateMapHelper = new InvalidateMapHelper(mapView);
@@ -189,7 +184,7 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
 
     @Override
     public View getView() {
-        return mapContainer;
+        return mapView;
     }
 
     @Override
@@ -212,17 +207,10 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
             lifecycle.removeObserver(this);
         }
 
-
-        if (mapView != null) {
-            mapView.removeTimeExtentChangedListener(this);
-            mapView.removeViewpointChangedListener(this);
-        }
-
         if (scaleBarController != null) {
             scaleBarController.dispose();
             scaleBarController = null;
         }
-
 
         mapViewOnTouchListener.clearAllDelegates();
         mapViewOnTouchListener = null;
@@ -258,6 +246,10 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+        if (disposed) {
+            result.success(null);
+            return;
+        }
         switch (call.method) {
             case "map#waitForMap": {
                 result.success(null);
@@ -424,10 +416,14 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
             case "map#locationToScreen": {
                 final Point mapPoint = Convert.toPoint(call.arguments);
                 final android.graphics.Point screenPoint = mapView.locationToScreen(mapPoint);
-                double[] screenPoints = new double[2];
-                screenPoints[0] = Convert.pixelsToDpF(context, screenPoint.x);
-                screenPoints[1] = Convert.pixelsToDpF(context, screenPoint.y);
-                result.success(screenPoints);
+                if (screenPoint == null) {
+                    result.success(null);
+                } else {
+                    double[] screenPoints = new double[2];
+                    screenPoints[0] = Convert.pixelsToDpF(context, screenPoint.x);
+                    screenPoints[1] = Convert.pixelsToDpF(context, screenPoint.y);
+                    result.success(screenPoints);
+                }
             }
             break;
             case "map#screenToLocation": {
@@ -630,12 +626,9 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
     }
 
     private void destroyMapViewIfNecessary() {
-        if (mapContainer != null) {
-            mapContainer.removeAllViews();
-            mapContainer = null;
-        }
         if (mapView != null) {
             mapView.dispose();
+            mapView.removeAllViews();
             mapView = null;
         }
         mapLoadedListener.setMap(null);
@@ -906,17 +899,24 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         }
 
         public void setMap(ArcGISMap map) {
-            if (this.map != null) {
-                this.map.removeDoneLoadingListener(this);
-            }
-            this.map = map;
-            if (map != null) {
-                map.addDoneLoadingListener(this);
+            try {
+                if (this.map != null) {
+                    this.map.removeDoneLoadingListener(this);
+                }
+                this.map = map;
+                if (map != null) {
+                    map.addDoneLoadingListener(this);
+                }
+            }catch (Exception e){
+                Log.e(TAG, "setMap: ", e);
             }
         }
 
         @Override
         public void run() {
+            if (disposed) {
+                return;
+            }
             map.removeDoneLoadingListener(this);
             if (map.getLoadStatus() == LoadStatus.LOADED) {
                 methodChannel.invokeMethod("map#loaded", null);

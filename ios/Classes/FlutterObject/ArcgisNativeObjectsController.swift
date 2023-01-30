@@ -14,7 +14,6 @@ protocol ArcgisNativeObjectFactory {
 
 class ArcgisNativeObjectsController: NativeMessageSink {
 
-
     private let channel: FlutterMethodChannel
 
     private let factory: ArcgisNativeObjectFactory
@@ -22,14 +21,33 @@ class ArcgisNativeObjectsController: NativeMessageSink {
     init(messenger: FlutterBinaryMessenger, factory: ArcgisNativeObjectFactory) {
         channel = FlutterMethodChannel(name: "plugins.flutter.io/arcgis_channel/native_objects", binaryMessenger: messenger)
         self.factory = factory
-        channel.setMethodCallHandler(handle)
+        setMethodCallHandlers()
+    }
+
+    deinit {
+        channel.setMethodCallHandler(nil)
     }
 
     func send(method: String, arguments: Any?) {
         channel.invokeMethod(method, arguments: arguments)
     }
 
-    private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    private func createNativeObject(objectId: String, type: String, arguments: Any?) -> NativeObject {
+        let nativeObject = factory.createNativeObject(objectId: objectId, type: type, arguments: arguments, messageSink: self)
+        NativeObjectStorage.shared.addNativeObject(object: nativeObject)
+        return nativeObject
+    }
+
+    private func setMethodCallHandlers() {
+        channel.setMethodCallHandler({ [weak self](call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+            guard let self else {
+                return
+            }
+            self.methodCallHandler(call: call, result: result)
+        })
+    }
+
+    private func methodCallHandler(call: FlutterMethodCall, result: @escaping FlutterResult){
         switch (call.method) {
         case "createNativeObject":
             let args = call.arguments as! [String: Any]
@@ -61,11 +79,5 @@ class ArcgisNativeObjectsController: NativeMessageSink {
             result(FlutterMethodNotImplemented)
             break
         }
-    }
-
-    private func createNativeObject(objectId: String, type: String, arguments: Any?) -> NativeObject {
-        let nativeObject = factory.createNativeObject(objectId: objectId, type: type, arguments: arguments, messageSink: self)
-        NativeObjectStorage.shared.addNativeObject(object: nativeObject)
-        return nativeObject
     }
 }

@@ -102,16 +102,23 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
 
         super.init()
 
+        setMethodCallHandlers()
+
         initSymbolsControllers()
 
         mapView.touchDelegate = self
-        mapView.viewpointChangedHandler = viewpointChangedHandler
-        channel.setMethodCallHandler(handle)
-        locationDisplayController.locationTapHandler = sendUserLocationTap
+        mapView.viewpointChangedHandler = { [weak self] in
+            self?.viewpointChangedHandler()
+        }
+
+        locationDisplayController.locationTapHandler = { [weak self] in
+            self?.sendUserLocationTap()
+        }
         initWithArgs(args: args)
     }
 
     deinit {
+        channel.setMethodCallHandler(nil)
         locationDisplayController.locationTapHandler = nil
         timeExtentObservation?.invalidate()
         timeExtentObservation = nil
@@ -124,9 +131,16 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
         mapView
     }
 
-    private func handle(_ call: FlutterMethodCall,
-                        result: @escaping FlutterResult) -> Void {
+    private func setMethodCallHandlers() -> Void {
+        channel.setMethodCallHandler({ [weak self](call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+            guard let self else {
+                return
+            }
+            self.methodCallHandler(call: call, result: result)
+        })
+    }
 
+    private func methodCallHandler(call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "map#waitForMap":
             result(nil)
@@ -151,10 +165,10 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
         case "map#getLegendInfos":
             let legendInfoController = LegendInfoController(layersController: layersController)
             legendInfoController.loadAsync(args: call.arguments, result: { [weak self] items in
-                result(items)
                 guard let self = self else {
                     return
                 }
+                result(items)
                 self.legendInfoControllers = self.legendInfoControllers.filter {
                     $0 !== legendInfoController
                 }
@@ -476,7 +490,6 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
                 }
                 timeAwareLayers.append(timeAwareLayer)
             }
-
             result(timeAwareLayers.map { (layer) -> Any in
                 var layerId: String?
                 if layer is AGSLayer {
@@ -549,7 +562,7 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
         }
     }
 
-    private func loadMobileMapPackage(offlinePath:String, mapIndex:Int) {
+    private func loadMobileMapPackage(offlinePath: String, mapIndex: Int) {
         let mobileMapPackage = AGSMobileMapPackage(fileURL: URL(string: offlinePath)!)
         mobileMapPackage.load { [weak self] error in
             guard let self = self else {

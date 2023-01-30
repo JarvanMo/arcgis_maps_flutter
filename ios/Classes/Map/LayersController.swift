@@ -227,7 +227,6 @@ class LayersController {
             }
 
             nativeLayer.load { [weak self] error in
-
                 if flutterMap.dict[layer.layerId] == nil {
                     return
                 }
@@ -373,6 +372,4 @@ class LayersController {
         }
         return nil
     }
-
-
 }
