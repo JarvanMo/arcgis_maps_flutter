@@ -74,7 +74,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
             isReturnGeometry = queryParametersMap["isReturnGeometry"] as Boolean
 
             if (geometryParam != null) {
-                geometry = geometryParam
+                geometry = geometryParam.extent
             }
             maxFeatures = queryParametersMap["maxFeatures"] as Int
             if (whereClauseParam != null) {
@@ -229,7 +229,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
                 whereClause = it
             }
             geometryParam?.let {
-                geometry = it
+                geometry = it.extent
             }
             spatialRelationshipParam?.let {
                 spatialRelationship = it
