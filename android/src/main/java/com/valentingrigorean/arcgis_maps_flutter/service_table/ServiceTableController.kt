@@ -20,7 +20,8 @@ class ServiceTableController(messenger: BinaryMessenger) :
         channel.setMethodCallHandler(this)
     }
 
-    private val listenableResult:MutableList<ListenableFuture<*>> = mutableListOf()
+    private val listenableResult: MutableList<ListenableFuture<*>> = mutableListOf()
+    private val cachedServiceTable: MutableMap<String, ServiceFeatureTable> = mutableMapOf()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -42,7 +43,19 @@ class ServiceTableController(messenger: BinaryMessenger) :
     }
 
     private fun queryFeatures(call: MethodCall, result: MethodChannel.Result) {
-        val serviceFeatureTable = ServiceFeatureTable(call.argument<String?>("url"))
+        val url = call.argument<String?>("url").orEmpty()
+        val serviceFeatureTable: ServiceFeatureTable?
+        if (cachedServiceTable.containsKey(url)) {
+            serviceFeatureTable = cachedServiceTable[url]
+        } else {
+            serviceFeatureTable = ServiceFeatureTable(url)
+            cachedServiceTable[url] = serviceFeatureTable
+        }
+        if (serviceFeatureTable == null){
+            result.error("-999","can not get sServiceFeatureTable","url ${url}")
+            return
+        }
+
         val queryParametersMap: Map<Any, Any> =
             call.argument<Map<Any, Any>?>("queryParameters").orEmpty()
         val whereClauseParam: String? = queryParametersMap["whereClause"] as String?
@@ -97,7 +110,19 @@ class ServiceTableController(messenger: BinaryMessenger) :
     }
 
     private fun queryFeatureCount(call: MethodCall, result: MethodChannel.Result) {
-        val serviceFeatureTable = ServiceFeatureTable(call.argument<String?>("url"))
+        val url = call.argument<String?>("url").orEmpty()
+        val serviceFeatureTable: ServiceFeatureTable?
+        if (cachedServiceTable.containsKey(url)) {
+            serviceFeatureTable = cachedServiceTable[url]
+        } else {
+            serviceFeatureTable = ServiceFeatureTable(url)
+            cachedServiceTable[url] = serviceFeatureTable
+        }
+        if (serviceFeatureTable == null){
+            result.error("-999","can not get sServiceFeatureTable","url ${url}")
+            return
+        }
+
         val queryParametersMap: Map<Any, Any> =
             call.argument<Map<Any, Any>?>("queryParameters").orEmpty()
         val whereClauseParam: String? = queryParametersMap["whereClause"] as String?
@@ -145,7 +170,19 @@ class ServiceTableController(messenger: BinaryMessenger) :
     }
 
     private fun queryStatisticsAsync(call: MethodCall, result: MethodChannel.Result) {
-        val serviceFeatureTable = ServiceFeatureTable(call.argument<String?>("url"))
+        val url = call.argument<String?>("url").orEmpty()
+        val serviceFeatureTable: ServiceFeatureTable?
+        if (cachedServiceTable.containsKey(url)) {
+            serviceFeatureTable = cachedServiceTable[url]
+        } else {
+            serviceFeatureTable = ServiceFeatureTable(url)
+            cachedServiceTable[url] = serviceFeatureTable
+        }
+        if (serviceFeatureTable == null){
+            result.error("-999","can not get sServiceFeatureTable","url ${url}")
+            return
+        }
+
         val queryParametersMap: Map<Any, Any> =
             call.argument<Map<Any, Any>?>("statisticsQueryParameters").orEmpty()
 
@@ -165,7 +202,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
             (queryParametersMap["groupByFieldNames"] as? List<String>).orEmpty()
 
         val statisticDefinitionsParam =
-            (queryParametersMap["statisticDefinitions"] as List<Map<String, String>>).orEmpty()
+            (queryParametersMap["statisticDefinitions"] as? List<Map<String, String>>).orEmpty()
                 .map {
                     StatisticDefinition(
                         it["fieldName"],
@@ -175,11 +212,11 @@ class ServiceTableController(messenger: BinaryMessenger) :
                 }.toList()
 
         val orderByFieldsParam =
-            (queryParametersMap["orderByFields"] as List<Map<String, String>>).orEmpty()
+            (queryParametersMap["orderByFields"] as? List<Map<String, String>>).orEmpty()
                 .map {
                     OrderBy(
                         it["fieldName"],
-                        when(it["sortOrder"]){
+                        when (it["sortOrder"]) {
                             "ASCENDING" -> QueryParameters.SortOrder.ASCENDING
                             "DESCENDING" -> QueryParameters.SortOrder.DESCENDING
                             else -> throw IllegalArgumentException("unsupported value ${it["sortOrder"]}")
@@ -232,7 +269,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
                 )
             }
             result.success(
-                mapOf<String,Any>(
+                mapOf<String, Any>(
                     "results" to resultRecords
                 )
             )
