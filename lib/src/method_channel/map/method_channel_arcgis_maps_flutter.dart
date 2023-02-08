@@ -65,7 +65,7 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
   Future<void> init(int mapId) {
     MethodChannel? channel = _channels[mapId];
     if (channel == null) {
-      channel = MethodChannel('plugins.flutter.io/arcgis_maps_$mapId');
+      channel = OptionalMethodChannel('plugins.flutter.io/arcgis_maps_$mapId');
       channel.setMethodCallHandler(
           (MethodCall call) => _handleMethodCall(call, mapId));
       _channels[mapId] = channel;
@@ -418,7 +418,7 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
 
   @override
   void dispose(int mapId) {
-    // Noop!
+    _channels.remove(mapId);
   }
 
   @override

@@ -260,9 +260,13 @@ class _ArcgisMapViewState extends State<ArcgisMapView> {
   }
 
   @override
-  void dispose() async {
+  void dispose() {
+    _disposeController();
     super.dispose();
-    ArcgisMapController controller = await _controller.future;
+  }
+
+  Future<void> _disposeController() async {
+    final ArcgisMapController controller = await _controller.future;
     controller.dispose();
   }
 
@@ -437,24 +441,23 @@ class _ArcgisMapViewState extends State<ArcgisMapView> {
     if (updates.isEmpty) {
       return;
     }
-    if (updates.containsKey('myLocationEnabled')) {
-      final ArcgisMapController controller = await _controller.future;
-      final bool isStarted = await controller.locationDisplay.started;
-      if (mounted) {
-        try {
-          if (updates['myLocationEnabled'] && !isStarted) {
-            await controller.locationDisplay.start();
-          } else if (isStarted) {
-            await controller.locationDisplay.stop();
-          }
-        } catch (ex, stackTrace) {
-          widget.failedToStartMyLocation?.call(ex, stackTrace);
-        }
-      }
-    }
+
     final ArcgisMapController controller = await _controller.future;
     if (!mounted) {
       return;
+    }
+    if (updates.containsKey('myLocationEnabled')) {
+      try {
+        final bool isStarted = await controller.locationDisplay.started;
+        if (updates['myLocationEnabled'] && !isStarted) {
+          await controller.locationDisplay.start();
+        } else if (isStarted) {
+          await controller.locationDisplay.stop();
+        }
+
+      } catch (ex, stackTrace) {
+        widget.failedToStartMyLocation?.call(ex, stackTrace);
+      }
     }
     controller._updateMapOptions(updates);
     _arcgisMapOptions = newOptions;
