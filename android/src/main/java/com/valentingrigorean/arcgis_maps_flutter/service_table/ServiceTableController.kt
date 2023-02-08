@@ -1,5 +1,6 @@
 package com.valentingrigorean.arcgis_maps_flutter.service_table
 
+import android.util.Log
 import com.esri.arcgisruntime.concurrent.ListenableFuture
 import com.esri.arcgisruntime.data.*
 import com.esri.arcgisruntime.data.QueryParameters.OrderBy
@@ -74,7 +75,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
             isReturnGeometry = queryParametersMap["isReturnGeometry"] as Boolean
 
             if (geometryParam != null) {
-                geometry = geometryParam.extent
+                geometry = geometryParam
             }
             maxFeatures = queryParametersMap["maxFeatures"] as Int
             if (whereClauseParam != null) {
@@ -229,7 +230,7 @@ class ServiceTableController(messenger: BinaryMessenger) :
                 whereClause = it
             }
             geometryParam?.let {
-                geometry = it.extent
+                geometry = it
             }
             spatialRelationshipParam?.let {
                 spatialRelationship = it
