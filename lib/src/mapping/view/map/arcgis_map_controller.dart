@@ -207,16 +207,6 @@ class ArcgisMapController {
     return ArcgisMapsFlutterPlatform.instance.recenter(mapId);
   }
 
-  Future<num?> sendMeasureDistanceAction(MeasureAction action) async {
-    return ArcgisMapsFlutterPlatform.instance
-        .sendMeasureDistanceAction(mapId, action);
-  }
-
-  Future<num?> sendMeasureAreaAction(MeasureAction action) async {
-    return ArcgisMapsFlutterPlatform.instance
-        .sendMeasureAreaAction(mapId, action);
-  }
-
   Future<void> invalidatePlatformView() async {
     if (Platform.isAndroid) {
       return await ArcgisMapsFlutterPlatform.instance.invalidatePlatformView(

@@ -105,8 +105,6 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
 
     private boolean disposed = false;
 
-    private MeasureController measureController;
-
     private boolean loadedCallbackPending = false;
 
     private double minScale = 0;
@@ -130,7 +128,6 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
         MapView realMapView = mapView.getMapView();
         if (realMapView != null){
             realMapView.setBackgroundGrid(new BackgroundGrid(0xFFF5F5F5, 0xFFF5F5F5, 0F, 10F));
-            measureController = new MeasureController(realMapView);
         }
         mapView.getSelectionProperties().setColor(Color.BLACK);
 
@@ -563,18 +560,6 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
             case "map#updateSecondaryLayerVisibility": {
                 invalidateMapHelper.invalidateMapIfNeeded();
                 LayerContentHelper.INSTANCE.updateLayerVisibility(call, result);
-                break;
-            }
-            case "map#sendMeasureDistanceAction": {
-                invalidateMapHelper.invalidateMapIfNeeded();
-                final Map<?, ?> data = call.arguments();
-                 measureController.onDistanceMeasure((String) data.get("action"),result);
-                break;
-            }
-            case "map#sendMeasureAreaAction": {
-                invalidateMapHelper.invalidateMapIfNeeded();
-                final Map<?, ?> data = call.arguments();
-                measureController.onAreaMeasure((String) data.get("action"),result);
                 break;
             }
             default:

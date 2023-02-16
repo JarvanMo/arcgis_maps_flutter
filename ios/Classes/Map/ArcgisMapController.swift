@@ -62,8 +62,6 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
         }
     }
 
-    private let measureController: ArcGisMapMeasureController
-
     public init(
             withRegistrar registrar: FlutterPluginRegistrar,
             withFrame frame: CGRect,
@@ -76,7 +74,6 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
         mapView.selectionProperties = AGSSelectionProperties(color: UIColor.black)
         mapView.backgroundGrid = AGSBackgroundGrid(color: UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1), gridLineColor: UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1), gridLineWidth: 0, gridSize: 10)
 //        mapView.backgroundColor = UIColor.white
-        measureController = ArcGisMapMeasureController(mapView: mapView)
         selectionPropertiesHandler = SelectionPropertiesHandler(selectionProperties: mapView.selectionProperties)
 
         symbolVisibilityFilterController = SymbolVisibilityFilterController(mapView: mapView)
@@ -442,22 +439,6 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
             break
         case "map#updateSecondaryLayerVisibility":
             LayerContentHelper.shareManager().updateLayerVisibility(call, result: result)
-            break
-        case "map#sendMeasureDistanceAction":
-            if let data = call.arguments as? Dictionary<String, Any> {
-                let action = data["action"] as! String
-                measureController.onDistanceMeasure(action: action, result: result)
-            } else {
-                result(0.0)
-            }
-            break
-        case "map#sendMeasureAreaAction":
-            if let data = call.arguments as? Dictionary<String, Any> {
-                let action = data["action"] as! String
-                measureController.onAreaMeasure(action: action, result: result)
-            } else {
-                result(0.0)
-            }
             break
         default:
             result(FlutterMethodNotImplemented)

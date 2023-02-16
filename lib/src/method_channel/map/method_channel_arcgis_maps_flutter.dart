@@ -497,19 +497,6 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
   }
 
   @override
-  Future<num?> sendMeasureDistanceAction(
-      int mapId, MeasureAction action) async {
-    return channel(mapId).invokeMethod<num?>(
-        "map#sendMeasureDistanceAction", {"action": action.name});
-  }
-
-  @override
-  Future<num?> sendMeasureAreaAction(int mapId, MeasureAction action) async {
-    return channel(mapId).invokeMethod<num?>(
-        "map#sendMeasureAreaAction", {"action": action.name});
-  }
-
-  @override
   Future<void> invalidatePlatformView(int mapId){
     return channel(mapId).invokeMethod(
         "map#invalidatePlatformView");
