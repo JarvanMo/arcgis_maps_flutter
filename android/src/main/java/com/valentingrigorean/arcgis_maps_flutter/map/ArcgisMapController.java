@@ -46,7 +46,6 @@ import com.valentingrigorean.arcgis_maps_flutter.layers.LayersChangedController;
 import com.valentingrigorean.arcgis_maps_flutter.layers.LayersController;
 import com.valentingrigorean.arcgis_maps_flutter.layers.LegendInfoController;
 import com.valentingrigorean.arcgis_maps_flutter.layers.MapChangeAware;
-import com.valentingrigorean.arcgis_maps_flutter.measure.MeasureController;
 import com.valentingrigorean.arcgis_maps_flutter.utils.AGSLoadObjects;
 
 import java.util.ArrayList;
