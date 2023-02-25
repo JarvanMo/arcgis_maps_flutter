@@ -203,10 +203,6 @@ class ArcgisMapController {
     );
   }
 
-  Future<void> setInitialViewpoint() async {
-    return ArcgisMapsFlutterPlatform.instance.setInitialViewpoint(mapId);
-  }
-
   Future<void> recenter() async {
     return ArcgisMapsFlutterPlatform.instance.recenter(mapId);
   }

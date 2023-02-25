@@ -398,28 +398,6 @@ public class ArcgisMapController: NSObject, FlutterPlatformView {
             layersController.setTimeOffset(arguments: call.arguments)
             result(nil)
             break
-//            add by JarvanMo
-        case "map#setInitialViewpoint":
-            guard  let map = mapView.map else {
-                result(nil)
-                return
-            }
-
-            guard let initialViewPoint = map.initialViewpoint else {
-                guard let currentViewPoint = mapView.currentViewpoint(with: AGSViewpointType.boundingGeometry) else {
-                    result(nil)
-                    return
-                }
-                mapView.setViewpoint(currentViewPoint, completion: { (r) -> Void in
-                    result(nil)
-                })
-                return
-            }
-
-            mapView.setViewpoint(initialViewPoint, completion: { (r) -> Void in
-                result(nil)
-            })
-            break
         case "map#recenter":
             let locationDisplay = mapView.locationDisplay
             if (!locationDisplay.started) {
