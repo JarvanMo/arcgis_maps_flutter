@@ -561,6 +561,25 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
                 LayerContentHelper.INSTANCE.updateLayerVisibility(call, result);
                 break;
             }
+            case "map#getInitialViewpoint": {
+                if (mapView == null) {
+                    result.success(null);
+                    return;
+                }
+                ArcGISMap arcMap = mapView.getMap();
+                if (arcMap == null) {
+                    result.success(null);
+                    return;
+                }
+
+                Viewpoint initialViewPoint = arcMap.getInitialViewpoint();
+
+                if (initialViewPoint == null) {
+                    result.success(null);
+                } else {
+                    result.success(Convert.viewpointToJson(initialViewPoint));
+                }
+            }
             default:
                 result.notImplemented();
                 break;
