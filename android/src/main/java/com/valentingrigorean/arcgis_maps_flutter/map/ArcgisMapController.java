@@ -560,6 +560,7 @@ final class ArcgisMapController implements DefaultLifecycleObserver, PlatformVie
                     result.success(Convert.viewpointToJson(initialViewPoint));
                 }
             }
+            break;
             default:
                 result.notImplemented();
                 break;
