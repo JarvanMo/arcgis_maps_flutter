@@ -42,7 +42,6 @@ import 'package:http/http.dart' as http;
 import 'package:xml2json/xml2json.dart';
 import 'package:jiffy/jiffy.dart';
 
-import 'src/method_channel/service_table/method_channel_service_table_flutter.dart';
 
 part 'src/dispose_scope.dart';
 
@@ -194,9 +193,4 @@ part 'src/toolkit/compass.dart';
 part 'src/toolkit/time_slider/time_slider.dart';
 part 'src/toolkit/time_slider/time_slider_data_provider.dart';
 
-part 'src/data/query/query_parmeters.dart';
 part 'src/data/layer/layer_content.dart';
-part 'src/data/statistic/statistic.dart';
-part 'src/data/statistic/statistic_result.dart';
-part 'src/feature/feature.dart';
-part 'src/service_table/service_table.dart';

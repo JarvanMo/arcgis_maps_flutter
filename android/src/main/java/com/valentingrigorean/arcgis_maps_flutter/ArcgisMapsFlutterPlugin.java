@@ -39,7 +39,6 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
     private ArcgisNativeObjectsController nativeObjectsController;
     private MethodChannel channel;
     private AuthenticationManagerController authenticationManagerController;
-    private ServiceTableController serviceTableController;
 
     @Nullable
     private Lifecycle lifecycle;
@@ -62,7 +61,6 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
         nativeObjectsController = new ArcgisNativeObjectsController(binding.getBinaryMessenger(), new ArcgisNativeObjectFactoryImpl(binding.getApplicationContext()));
 
         authenticationManagerController = new AuthenticationManagerController(binding.getBinaryMessenger(), binding.getApplicationContext());
-        serviceTableController = new ServiceTableController(binding.getBinaryMessenger());
     }
 
     @Override
@@ -79,9 +77,6 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
         authenticationManagerController.dispose();
         authenticationManagerController = null;
-
-        serviceTableController.dispose();
-        serviceTableController = null;
     }
 
     @Override
