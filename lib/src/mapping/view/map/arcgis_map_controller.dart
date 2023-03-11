@@ -73,6 +73,23 @@ class ArcgisMapController {
     return layers;
   }
 
+  Future<List<GeoElement>> queryFeatureTableFromLayer({
+        required String layerName,
+        Geometry? geometry,
+        SpatialRelationship? spatialRelationship,
+        int? maxResults,
+        Map<String, dynamic>? queryValues,
+      }) async {
+    return ArcgisMapsFlutterPlatform.instance.queryFeatureTableFromLayer(
+      mapId: mapId,
+      layerName: layerName,
+      queryValues: queryValues,
+      geometry: geometry,
+      spatialRelationship: spatialRelationship,
+      maxResults: maxResults
+    );
+  }
+
   Future<List<LegendInfoResult>> getLegendInfosForLayers(
       Set<Layer> layers) async {
     var futures = <Future<List<LegendInfoResult>>>[];
@@ -320,6 +337,10 @@ class ArcgisMapController {
     ArcgisMapsFlutterPlatform.instance.onLongPress(mapId: mapId).listen(
         (MapLongPressEvent e) =>
             _arcgisMapState.onLongPress(e.screenPoint, e.position));
+
+    ArcgisMapsFlutterPlatform.instance.onLongPressEnd(mapId: mapId).listen(
+            (MapLongPressEndEvent e) =>
+            _arcgisMapState.onLongPressEnd(e.screenPoint, e.position));
 
     ArcgisMapsFlutterPlatform.instance.onLayerLoad(mapId: mapId).listen(
         (LayerLoadedEvent e) =>

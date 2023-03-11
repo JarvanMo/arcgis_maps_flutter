@@ -104,6 +104,20 @@ abstract class ArcgisMapsFlutterPlatform extends PlatformInterface {
         'getWanderExtentFactor() has not been implemented.');
   }
 
+  Future<List<GeoElement>> queryFeatureTableFromLayer(
+      {
+        required int mapId,
+        required String layerName,
+        Geometry? geometry,
+        SpatialRelationship? spatialRelationship,
+        int? maxResults,
+        Map<String, dynamic>? queryValues
+      }
+      ) {
+    throw UnimplementedError(
+        'selectFeatureById() has not been implemented.');
+  }
+
   Future<List<TimeAwareLayerInfo>> getTimeAwareLayerInfos(int mapId) {
     throw UnimplementedError(
         'getTimeAwareLayerInfos() has not been implemented.');
@@ -252,6 +266,11 @@ abstract class ArcgisMapsFlutterPlatform extends PlatformInterface {
   /// A Map has been long tapped at a certain [LatLng].
   Stream<MapLongPressEvent> onLongPress({required int mapId}) {
     throw UnimplementedError('onLongPress() has not been implemented.');
+  }
+
+  /// A Map has been long tapped at a certain [LatLng] and the long tap has ended.
+  Stream<MapLongPressEndEvent> onLongPressEnd({required int mapId}) {
+    throw UnimplementedError('onLongPressEnd() has not been implemented.');
   }
 
   Stream<UserLocationTapEvent> onUserLocationTap({required int mapId}) {

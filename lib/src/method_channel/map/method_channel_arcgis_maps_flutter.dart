@@ -228,6 +228,45 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
   }
 
   @override
+  Future<List<GeoElement>> queryFeatureTableFromLayer(
+      {
+        required int mapId,
+        required String layerName,
+        Geometry? geometry,
+        SpatialRelationship? spatialRelationship,
+        int? maxResults,
+        Map<String, dynamic>? queryValues,
+      }) async {
+
+    queryValues ??= {};
+
+    queryValues["layerName"] = layerName;
+
+    if (geometry != null) {
+      queryValues["geometry"] = geometry.toJson();
+    }
+
+    if (spatialRelationship != null) {
+      queryValues["spatialRelationship"] = spatialRelationship.value;
+    }
+
+    if (maxResults != null) {
+      queryValues["maxResults"] = maxResults.toString();
+    }
+
+    final result = await channel(mapId).invokeListMethod(
+      'map#queryFeatureTableFromLayer',
+      queryValues,
+    );
+
+    return result
+        ?.map<GeoElement>((e) => GeoElement.fromJson(e))
+        .toList() ??
+        const [];
+
+  }
+
+  @override
   Future<List<TimeAwareLayerInfo>> getTimeAwareLayerInfos(int mapId) async {
     final result =
         await channel(mapId).invokeListMethod('map#getTimeAwareLayerInfos');
@@ -467,6 +506,11 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
   }
 
   @override
+  Stream<MapLongPressEndEvent> onLongPressEnd({required int mapId}) {
+    return _events(mapId).whereType<MapLongPressEndEvent>();
+  }
+
+  @override
   Stream<UserLocationTapEvent> onUserLocationTap({required int mapId}) {
     return _events(mapId).whereType<UserLocationTapEvent>();
   }
@@ -586,6 +630,18 @@ class MethodChannelArcgisMapsFlutter extends ArcgisMapsFlutterPlatform {
         AGSPoint position = AGSPoint.fromJson(args['position'])!;
         _mapEventStreamController.add(
           MapLongPressEvent(
+            mapId,
+            screenPoint: screenPoint,
+            position: position,
+          ),
+        );
+        break;
+      case 'map#onLongPressEnd':
+        final args = call.arguments;
+        final screenPoint = _fromJson(args['screenPoint']);
+        AGSPoint position = AGSPoint.fromJson(args['position'])!;
+        _mapEventStreamController.add(
+          MapLongPressEndEvent(
             mapId,
             screenPoint: screenPoint,
             position: position,
