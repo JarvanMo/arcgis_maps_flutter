@@ -40,6 +40,7 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
     private MethodChannel channel;
 
     private ServiceTableController serviceTableController;
+
     private AuthenticationManagerController authenticationManagerController;
 
     @Nullable
