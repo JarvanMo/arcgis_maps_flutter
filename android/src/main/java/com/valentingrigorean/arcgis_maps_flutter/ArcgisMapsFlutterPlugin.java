@@ -38,6 +38,8 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
     private CoordinateFormatterController coordinateFormatterController;
     private ArcgisNativeObjectsController nativeObjectsController;
     private MethodChannel channel;
+
+    private ServiceTableController serviceTableController;
     private AuthenticationManagerController authenticationManagerController;
 
     @Nullable
@@ -60,6 +62,8 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
         nativeObjectsController = new ArcgisNativeObjectsController(binding.getBinaryMessenger(), new ArcgisNativeObjectFactoryImpl(binding.getApplicationContext()));
 
+        serviceTableController = new ServiceTableController(binding.getBinaryMessenger());
+
         authenticationManagerController = new AuthenticationManagerController(binding.getBinaryMessenger(), binding.getApplicationContext());
     }
 
@@ -74,6 +78,9 @@ public class ArcgisMapsFlutterPlugin implements FlutterPlugin, ActivityAware, Me
 
         nativeObjectsController.dispose();
         nativeObjectsController = null;
+
+        serviceTableController.dispose();
+        serviceTableController = null;
 
         authenticationManagerController.dispose();
         authenticationManagerController = null;

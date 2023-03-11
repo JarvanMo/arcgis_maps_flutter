@@ -9,6 +9,8 @@ public class SwiftArcgisMapsFlutterPlugin: NSObject, FlutterPlugin {
     private let coordinateFormatterController: CoordinateFormatterController
     private let arcgisNativeObjectsController: ArcgisNativeObjectsController
 
+    private let serviceTableController: ArcGisServiceTableController
+
     private let authenticationManager: ArcGisAuthenticationManager
 
     init(with registrar: FlutterPluginRegistrar) {
@@ -16,6 +18,7 @@ public class SwiftArcgisMapsFlutterPlugin: NSObject, FlutterPlugin {
         geometryController = GeometryEngineController(messenger: registrar.messenger())
         coordinateFormatterController = CoordinateFormatterController(messenger: registrar.messenger())
         arcgisNativeObjectsController = ArcgisNativeObjectsController(messenger: registrar.messenger(), factory: ArcgisNativeObjectFactoryImpl())
+        serviceTableController = ArcGisServiceTableController(messenger: registrar.messenger())
 
         authenticationManager = ArcGisAuthenticationManager(messenger: registrar.messenger())
         super.init()
